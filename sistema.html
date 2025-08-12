@@ -3,253 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <title>Registro de Reparto - Sistema</title>
-    <!-- ✅ PWA: Agregamos el manifest y el service worker para que la app sea instalable -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="favicon.png" type="image/png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Mi App">
+    <!-- Carga de Tailwind CSS para un diseño limpio y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Estilo general de la app */
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Inter', sans-serif;
             background: linear-gradient(to bottom, #f3f8ff, #d6e4f0);
-            margin: 0;
-            padding: 10px;
         }
-
-        /* Texto de bienvenida */
-        #bienvenida {
-            text-align: center;
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 15px;
-        }
-
-        /* Foto de perfil circular */
-        #foto-perfil {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #3498db;
-        }
-
-        /* Botones principales */
-        button {
-            background: linear-gradient(45deg, #4397e0, #618fc4);
-            border: none;
-            color: white;
-            padding: 10px 15px;
-            font-size: 1em;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.15);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Botón secundario (Historial, Guardar, etc.) */
-        .boton-secundario {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .boton-secundario:hover {
-            background-color: #b1bdc6;
-        }
-
-        /* Tabla estilo limpio */
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        th {
-            background: #3498db;
-            color: white;
-            padding: 8px;
-        }
-
-        td {
-            padding: 8px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
-        }
-
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 40px;
-        }
-
-        th, td {
-            border: 1px solid #000;
-            padding: 6px;
-            text-align: center;
-        }
-
-        input, select {
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .error {
-            background-color: #ffffff;
-        }
-
-        .total {
-            font-weight: bold;
-            background-color: #f0f0f0;
-        }
-
-        .boton {
-            padding: 10px 20px;
-            margin-top: 10px;
-        }
-
-        #historial {
-            display: none;
-            margin-top: 20px;
-        }
-
-        .logout {
-            float: right;
-            background: linear-gradient(45deg, #e74c3c, #c0392b);
-            color: white;
-            padding: 8px 14px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.15);
-            transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
-        }
-
-        .logout:hover {
-            background: linear-gradient(45deg, #ff6b5a, #e74c3c);
-            transform: translateY(-2px);
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .deudaPreventa {
-            background-color: #ffffcc;
-            padding: 10px;
-            margin-top: -30px;
-            margin-bottom: 30px;
-            font-weight: bold;
-        }
-        
-        /* Estilos del teclado virtual */
-        #teclado-virtual {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: #333;
-            padding: 10px;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
-            display: none; /* Inicialmente oculto */
-            z-index: 1000;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-        }
-
-        #teclado-virtual .grid-teclado {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            max-width: 400px;
-            margin: 0 auto;
-        }
-
-        #teclado-virtual button {
-            background-color: #555;
-            color: white;
-            border: none;
-            padding: 20px;
-            font-size: 1.5em;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        #teclado-virtual button:hover {
-            background-color: #777;
-        }
-
+        /* Personalización de los colores del botón para el teclado */
         #teclado-virtual button.operador {
             background-color: #f39c12;
         }
-
         #teclado-virtual button.operador:hover {
             background-color: #e67e22;
         }
     </style>
 </head>
-<body>
-    <button onclick="logout()" class="logout">Cerrar Sesión</button>
-    <div class="bienvenida">
-        <img id="fotoPerfil" class="foto-perfil" src="" alt="Foto de perfil" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
-        <h2>Bienvenido, a tu APP de REPARTO <span id="nombreUsuario"></span></h2>
-    </div>
+<body class="p-4 md:p-8">
 
-    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-        <button onclick="verHistorial()" class="boton-secundario">📅 Ver historial</button>
-        <button onclick="guardarDatos()" class="boton-secundario">💾 Guardar ahora</button>
-    </div>
-
-    <div id="tablasContainer">
-    </div>
-
-    <div id="fechaList" style="display:none; width: 100%; max-width: 200px;"></div>
-
-    <div id="historialFecha" style="display:none; padding: 10px;"></div>
-
-    <button id="volverBtn" onclick="volverAEdicion()" style="display:none; margin-top: 10px;">🔙 Volver a edición</button>
-
-    <!-- ✅ Teclado virtual agregado aquí -->
-    <div id="teclado-virtual">
-        <div class="grid-teclado">
-            <button onclick="agregarCaracter('1')">1</button>
-            <button onclick="agregarCaracter('2')">2</button>
-            <button onclick="agregarCaracter('3')">3</button>
-            <button class="operador" onclick="agregarCaracter('+')">+</button>
-            <button onclick="agregarCaracter('4')">4</button>
-            <button onclick="agregarCaracter('5')">5</button>
-            <button onclick="agregarCaracter('6')">6</button>
-            <button class="operador" onclick="agregarCaracter('-')">-</button>
-            <button onclick="agregarCaracter('7')">7</button>
-            <button onclick="agregarCaracter('8')">8</button>
-            <button onclick="agregarCaracter('9')">9</button>
-            <button class="operador" onclick="agregarCaracter('*')">×</button>
-            <button onclick="agregarCaracter('.')">.</button>
-            <button onclick="agregarCaracter('0')">0</button>
-            <button class="operador" onclick="calcularResultado()">=</button>
-            <button class="operador" onclick="agregarCaracter('/')">÷</button>
+    <!-- Modal de confirmación personalizado -->
+    <div id="custom-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[1001]">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Confirmar acción</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500" id="modal-message"></p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="modal-ok-btn" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-24 mr-2 shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        Aceptar
+                    </button>
+                    <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-24 shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
         </div>
-        <button onclick="cerrarTeclado()" style="margin-top: 10px; width: 100%; background-color: #c0392b;">Cerrar</button>
+    </div>
+
+    <!-- Botón de cerrar sesión en la esquina superior derecha -->
+    <button onclick="logout()" class="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-red-700 transition duration-200">
+        Cerrar Sesión
+    </button>
+
+    <div class="flex flex-col items-center mb-6">
+        <img id="fotoPerfil" class="w-20 h-20 rounded-full object-cover border-2 border-blue-500" src="" alt="Foto de perfil">
+        <h2 class="text-xl md:text-2xl font-bold text-gray-800 mt-2 text-center">Bienvenido, a tu APP de REPARTO <span id="nombreUsuario"></span></h2>
+    </div>
+
+    <div class="flex flex-wrap justify-between gap-4 mb-6">
+        <button onclick="verHistorial()" class="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-blue-600 transition duration-200 min-w-[150px]">
+            📅 Ver historial
+        </button>
+        <button onclick="guardarDatos()" class="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-blue-600 transition duration-200 min-w-[150px]">
+            💾 Guardar ahora
+        </button>
+    </div>
+
+    <div id="tablasContainer" class="space-y-8">
+    </div>
+
+    <div id="fechaList" class="hidden mt-6 max-w-sm mx-auto"></div>
+
+    <div id="historialFecha" class="hidden p-4 bg-white rounded-lg shadow-md mt-6"></div>
+
+    <button id="volverBtn" onclick="volverAEdicion()" class="hidden mt-4 mx-auto block bg-gray-500 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-gray-600 transition duration-200">
+        🔙 Volver a edición
+    </button>
+
+    <!-- Teclado virtual -->
+    <div id="teclado-virtual" class="hidden fixed bottom-0 left-0 w-full bg-gray-800 p-4 shadow-xl z-[1000] rounded-t-xl">
+        <div class="grid grid-cols-4 gap-2 max-w-sm mx-auto">
+            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('1')">1</button>
+            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('2')">2</button>
+            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('3')">3</button>
+            <button class="bg-orange-500 text-white p-4 text-xl rounded-lg shadow-md hover:bg-orange-600 transition duration-200" onclick="agregarCaracter('+')">+</button>
+            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('4')">4</button>
+            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('5')">5</button>
+            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('6')">6</button>
+            <button class="bg-orange-500 text-white p-4 text-xl rounded-lg shadow-md hover:bg-orange-600 transition duration-200" onclick="agregarCaracter('-')">-</button>
+            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('7')">7</button>
+            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('8')">8</button>
+            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('9')">9</button>
+            <button class="bg-orange-500 text-white p-4 text-xl rounded-lg shadow-md hover:bg-orange-600 transition duration-200" onclick="agregarCaracter('*')">×</button>
+            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('.')">.</button>
+            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('0')">0</button>
+            <button class="bg-blue-500 text-white p-4 text-xl rounded-lg shadow-md hover:bg-blue-600 transition duration-200 col-span-1" onclick="calcularResultado()">=</button>
+            <button class="bg-orange-500 text-white p-4 text-xl rounded-lg shadow-md hover:bg-orange-600 transition duration-200" onclick="agregarCaracter('/')">÷</button>
+        </div>
+        <button onclick="cerrarTeclado()" class="mt-4 w-full bg-red-600 text-white p-3 rounded-lg font-bold shadow-md hover:bg-red-700 transition duration-200">
+            Cerrar
+        </button>
     </div>
 
     <script>
@@ -266,7 +116,7 @@
             });
         }
         
-        // ===== TU CÓDIGO ORIGINAL DESDE AQUÍ =====
+        // ===== TU CÓDIGO ORIGINAL MODIFICADO AQUÍ =====
         const usuario = localStorage.getItem("user");
         if (!usuario) window.location.href = "login.html";
         document.getElementById("nombreUsuario").textContent = usuario;
@@ -301,17 +151,19 @@
         for (let t = 1; t <= tablaCount; t++) {
             const tabla = document.createElement("table");
             tabla.id = "tabla" + t;
+            tabla.className = "w-full border-collapse bg-white rounded-lg shadow-md mb-8";
             const thead = tabla.createTHead();
+            thead.className = "bg-blue-600 text-white";
             thead.innerHTML = `
                 <tr>
-                    <th>#</th>
-                    <th>Monto</th>
-                    <th>Estado</th>
-                    <th>Método</th>
-                    <th>Preventa</th>
-                    <th>Efectivo</th>
-                    <th>Yape</th>
-                    <th>Faltante</th>
+                    <th class="p-2 border border-gray-300 rounded-tl-lg">#</th>
+                    <th class="p-2 border border-gray-300">Monto</th>
+                    <th class="p-2 border border-gray-300">Estado</th>
+                    <th class="p-2 border border-gray-300">Método</th>
+                    <th class="p-2 border border-gray-300">Preventa</th>
+                    <th class="p-2 border border-gray-300">Efectivo</th>
+                    <th class="p-2 border border-gray-300">Yape</th>
+                    <th class="p-2 border border-gray-300 rounded-tr-lg">Faltante</th>
                 </tr>
             `;
             const tbody = tabla.createTBody();
@@ -319,31 +171,32 @@
             for (let i = 0; i < filasPorTabla; i++) {
                 const fila = tbody.insertRow();
                 const datos = datosGuardados["tabla" + t]?.[i] || {};
+                fila.className = "border-b border-gray-200";
                 fila.innerHTML = `
-                    <td>${i + 1}</td>
-                    <td><input type="text" class="monto" value="${datos.monto || ""}" pattern="[0-9+\-*\/\.]*"></td>
-                    <td><select class="estado">${estados.map(e => `<option ${e === datos.estado ? "selected" : ""}>${e}</option>`)}</select></td>
-                    <td><select class="metodo">${metodos.map(m => `<option ${m === datos.metodo ? "selected" : ""}>${m}</option>`)}</select></td>
-                    <td><select class="preventa">${preventas.map(p => `<option ${p === datos.preventa ? "selected" : ""}>${p}</option>`)}</select></td>
-                    <td><input type="number" class="efectivo" step="0.01" value="${datos.efectivo || ""}"></td>
-                    <td><input type="number" class="yape" step="0.01" value="${datos.yape || ""}"></td>
-                    <td class="faltante"></td>
+                    <td class="p-2 text-center">${i + 1}</td>
+                    <td class="p-2"><input type="text" class="monto w-full p-1 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" value="${datos.monto || ""}" pattern="[0-9+\-*\/\.]*"></td>
+                    <td class="p-2"><select class="estado w-full p-1 rounded-md border border-gray-300">${estados.map(e => `<option ${e === datos.estado ? "selected" : ""}>${e}</option>`)}</select></td>
+                    <td class="p-2"><select class="metodo w-full p-1 rounded-md border border-gray-300">${metodos.map(m => `<option ${m === datos.metodo ? "selected" : ""}>${m}</option>`)}</select></td>
+                    <td class="p-2"><select class="preventa w-full p-1 rounded-md border border-gray-300">${preventas.map(p => `<option ${p === datos.preventa ? "selected" : ""}>${p}</option>`)}</select></td>
+                    <td class="p-2"><input type="number" class="efectivo w-full p-1 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" step="0.01" value="${datos.efectivo || ""}"></td>
+                    <td class="p-2"><input type="number" class="yape w-full p-1 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" step="0.01" value="${datos.yape || ""}"></td>
+                    <td class="faltante p-2 text-center text-sm"></td>
                 `;
             }
 
             const tfoot = tabla.createTFoot();
             tfoot.innerHTML = `
-                <tr class="total">
-                    <td colspan="2">Total General:</td>
-                    <td colspan="2" class="totalGeneral">S/ 0.00</td>
-                    <td>Yape:</td>
-                    <td class="totalYape">S/ 0.00</td>
-                    <td>Efectivo:</td>
-                    <td>S/ 0.00</td>
+                <tr class="font-bold bg-gray-100">
+                    <td colspan="2" class="p-2 text-right">Total General:</td>
+                    <td colspan="2" class="totalGeneral p-2 text-center">S/ 0.00</td>
+                    <td class="p-2">Yape:</td>
+                    <td class="totalYape p-2 text-center">S/ 0.00</td>
+                    <td class="p-2">Efectivo:</td>
+                    <td class="totalEfectivo p-2 text-center">S/ 0.00</td>
                 </tr>
-                <tr class="total">
-                    <td colspan="2">Total Transferencia:</td>
-                    <td colspan="6" class="totalTransferencia">S/ 0.00</td>
+                <tr class="font-bold bg-gray-100">
+                    <td colspan="2" class="p-2 text-right">Total Transferencia:</td>
+                    <td colspan="6" class="totalTransferencia p-2 text-center">S/ 0.00</td>
                 </tr>
             `;
 
@@ -351,7 +204,7 @@
             container.appendChild(tabla);
             const deudaDiv = document.createElement("div");
             deudaDiv.id = "deuda" + t;
-            deudaDiv.className = "deudaPreventa";
+            deudaDiv.className = "deudaPreventa bg-yellow-100 p-3 rounded-lg font-bold mb-8";
             container.appendChild(deudaDiv);
         }
         
@@ -359,9 +212,9 @@
         function evalSafe(exp) {
             if (exp.trim() === "") return 0;
             try {
-                // Utiliza Function para evitar el uso inseguro de eval()
+                // Se utiliza 'Function' para una evaluación más segura.
                 const result = Function('"use strict";return (' + exp + ')')();
-                // Retorna NaN si el resultado no es un número finito
+                // Verificación de que el resultado es un número finito.
                 if (typeof result !== 'number' || !isFinite(result)) {
                     return NaN;
                 }
@@ -397,35 +250,29 @@
                     efectivoInput.disabled = (metodo === "Yape" || metodo === "Transferencia" || metodo === "No pago");
                     yapeInput.disabled = (metodo === "Efectivo" || metodo === "Transferencia" || metodo === "No pago");
                     
-                    // Si el estado no es "Entregado" o el monto es 0, limpiamos campos y pasamos a la siguiente fila.
-                    if (estado !== "Entregado" || (valorMonto.trim() === "" && metodo !== "No pago")) {
-                        fila.classList.remove("error");
-                        faltanteCelda.textContent = "";
-                        if (estado !== "Entregado") {
+                    // Si el estado no es "Entregado" o el monto no es válido, limpiamos campos y pasamos a la siguiente fila.
+                    if (estado !== "Entregado" || (isNaN(monto) && metodo !== "No pago")) {
+                         fila.classList.remove("bg-red-100");
+                         montoInput.classList.remove("bg-red-200");
+                         faltanteCelda.textContent = "";
+                         if (estado !== "Entregado") {
                             efectivoInput.value = "";
                             yapeInput.value = "";
-                        }
-                        // Continuar al siguiente elemento del bucle sin sumar nada
-                        return; 
+                         }
+                         return; // Continuar al siguiente elemento del bucle sin sumar nada
                     }
 
-                    // Si la expresión es incompleta, mostramos un mensaje pero NO detenemos el cálculo del total.
-                    if (isNaN(monto)) {
-                        faltanteCelda.textContent = "Expresión incompleta";
-                        faltanteCelda.style.color = "orange";
-                        monto = 0; // Usar 0 para que no se sume al total
-                    } else {
-                        // Limpiar el mensaje de expresión incompleta si la expresión es válida
-                        faltanteCelda.textContent = "";
-                        faltanteCelda.style.color = "";
-                    }
+                    // Limpiar mensajes de error si la expresión es válida
+                    faltanteCelda.textContent = "";
+                    fila.classList.remove("bg-red-100");
+                    montoInput.classList.remove("bg-red-200");
 
-                    if (monto > 0) { // Solo sumamos si el monto es un número válido
+                    if (monto > 0) { // Solo sumamos si el monto es un número válido y positivo
                         if (metodo === "No pago") {
                             if (preventa !== "Seleccione") {
                                 deudas[preventa] = (deudas[preventa] || 0) + monto;
-                                faltanteCelda.textContent = "Deuda: S/ " + monto.toFixed(2);
-                                faltanteCelda.style.color = "red";
+                                faltanteCelda.textContent = `Deuda: S/ ${monto.toFixed(2)}`;
+                                faltanteCelda.className = "faltante p-2 text-center text-sm text-red-600 font-bold";
                             }
                         } else {
                             total += monto; // Suma al total general
@@ -452,16 +299,16 @@
                                 
                                 const diferencia = monto - suma;
                                 if (Math.abs(diferencia) > 0.01) {
-                                    fila.classList.add("error");
+                                    fila.classList.add("bg-red-100");
                                     if (diferencia > 0) {
-                                        faltanteCelda.textContent = "Falta: S/ " + diferencia.toFixed(2);
-                                        faltanteCelda.style.color = "red";
+                                        faltanteCelda.textContent = `Falta: S/ ${diferencia.toFixed(2)}`;
+                                        faltanteCelda.className = "faltante p-2 text-center text-sm text-red-600 font-bold";
                                     } else {
-                                        faltanteCelda.textContent = "Sobra: S/ " + Math.abs(diferencia).toFixed(2);
-                                        faltanteCelda.style.color = "blue";
+                                        faltanteCelda.textContent = `Sobra: S/ ${Math.abs(diferencia).toFixed(2)}`;
+                                        faltanteCelda.className = "faltante p-2 text-center text-sm text-blue-600 font-bold";
                                     }
                                 } else {
-                                    fila.classList.remove("error");
+                                    fila.classList.remove("bg-red-100");
                                     faltanteCelda.textContent = "";
                                 }
                             }
@@ -480,7 +327,7 @@
                     deudaDiv.innerHTML += "Sin deudas por ahora.";
                 } else {
                     for (const key in deudas) {
-                        deudaDiv.innerHTML += `🟡 Preventa ${key} debe: <span style="color:red">S/ ${deudas[key].toFixed(2)}</span><br>`;
+                        deudaDiv.innerHTML += `🟡 Preventa ${key} debe: <span class="text-red-600">S/ ${deudas[key].toFixed(2)}</span><br>`;
                     }
                 }
             }
@@ -489,12 +336,17 @@
         document.addEventListener("focusin", function(e) {
             if (e.target.classList.contains("monto")) {
                 activeInput = e.target;
-                document.getElementById('teclado-virtual').style.display = 'block';
+                document.getElementById('teclado-virtual').classList.remove('hidden');
+                activeInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Desplazamiento automático
             }
         });
 
         function agregarCaracter(char) {
             if (activeInput) {
+                // Si el carácter es un operador, asegurarse de que no haya un operador anterior al final
+                if (['+', '-', '*', '/'].includes(char) && ['+', '-', '*', '/'].includes(activeInput.value.slice(-1))) {
+                    return;
+                }
                 activeInput.value += char;
                 activeInput.focus();
                 calcularTotales();
@@ -506,7 +358,7 @@
                 const expresion = activeInput.value;
                 const resultado = evalSafe(expresion);
                 if (!isNaN(resultado)) {
-                    activeInput.value = resultado.toFixed(2);
+                    activeInput.value = resultado; // Eliminar toFixed para permitir más operaciones
                 }
                 calcularTotales();
             }
@@ -517,12 +369,11 @@
                 activeInput.blur();
                 activeInput = null;
             }
-            document.getElementById('teclado-virtual').style.display = 'none';
+            document.getElementById('teclado-virtual').classList.add('hidden');
         }
 
+        // Llamada a calcularTotales en cada cambio de input para una actualización en tiempo real
         document.addEventListener("input", function(e) {
-            // Se ha cambiado la lógica para que el cálculo se active con cualquier cambio
-            // en los inputs, lo que permite que el total se actualice en tiempo real.
             if (e.target.classList.contains("monto") || e.target.classList.contains("metodo") || e.target.classList.contains("efectivo") || e.target.classList.contains("yape") || e.target.classList.contains("estado")) {
                 calcularTotales();
             }
@@ -544,14 +395,40 @@
             localStorage.setItem(claveDatos(fechaActual), JSON.stringify(datos));
         }
 
+        function showCustomModal(message, onConfirm) {
+            const modal = document.getElementById('custom-modal');
+            const msgEl = document.getElementById('modal-message');
+            const okBtn = document.getElementById('modal-ok-btn');
+            const cancelBtn = document.getElementById('modal-cancel-btn');
+            
+            msgEl.textContent = message;
+            modal.classList.remove('hidden');
+
+            const handleOk = () => {
+                onConfirm();
+                modal.classList.add('hidden');
+                okBtn.removeEventListener('click', handleOk);
+                cancelBtn.removeEventListener('click', handleCancel);
+            };
+
+            const handleCancel = () => {
+                modal.classList.add('hidden');
+                okBtn.removeEventListener('click', handleOk);
+                cancelBtn.removeEventListener('click', handleCancel);
+            };
+
+            okBtn.addEventListener('click', handleOk);
+            cancelBtn.addEventListener('click', handleCancel);
+        }
+
         function verHistorial() {
-            document.getElementById("fechaList").style.display = "block";
-            document.getElementById("historialFecha").style.display = "none";
-            document.getElementById("tablasContainer").style.display = "none";
-            document.getElementById("volverBtn").style.display = "inline-block";
+            document.getElementById("fechaList").classList.remove("hidden");
+            document.getElementById("historialFecha").classList.add("hidden");
+            document.getElementById("tablasContainer").classList.add("hidden");
+            document.getElementById("volverBtn").classList.remove("hidden");
 
             const contenedorFechas = document.getElementById("fechaList");
-            contenedorFechas.innerHTML = "<h3>📅 Selecciona una fecha:</h3>";
+            contenedorFechas.innerHTML = "<h3 class='text-xl font-bold mb-4'>📅 Selecciona una fecha:</h3>";
 
             const fechas = Object.keys(localStorage)
                 .filter(k => k.startsWith(`datos_${usuario}_`))
@@ -562,32 +439,17 @@
                 const fecha = key.replace(`datos_${usuario}_`, "");
 
                 const fila = document.createElement("div");
-                fila.style.display = "flex";
-                fila.style.justifyContent = "space-between";
-                fila.style.alignItems = "center";
-                fila.style.margin = "5px 0";
+                fila.className = "flex justify-between items-center my-2";
 
                 const btnFecha = document.createElement("button");
                 btnFecha.textContent = fecha;
-                btnFecha.style.flex = "1";
-                btnFecha.style.marginRight = "5px";
-                btnFecha.style.padding = "10px";
-                btnFecha.style.background = "#007bff";
-                btnFecha.style.color = "white";
-                btnFecha.style.border = "none";
-                btnFecha.style.borderRadius = "5px";
-                btnFecha.style.fontSize = "16px";
+                btnFecha.className = "flex-1 mr-2 p-3 bg-blue-500 text-white rounded-md text-lg shadow-md hover:bg-blue-600 transition duration-200";
                 btnFecha.onclick = () => mostrarHistorialDeFecha(fecha);
 
                 const btnEliminar = document.createElement("button");
                 btnEliminar.textContent = "🗑";
-                btnEliminar.style.background = "#dc3545";
-                btnEliminar.style.color = "white";
-                btnEliminar.style.border = "none";
-                btnEliminar.style.borderRadius = "5px";
-                btnEliminar.style.fontSize = "18px";
-                btnEliminar.style.cursor = "pointer";
-                btnEliminar.onclick = () => eliminarFechaHistorial(fecha);
+                btnEliminar.className = "bg-red-500 text-white p-3 rounded-md text-lg shadow-md hover:bg-red-600 transition duration-200";
+                btnEliminar.onclick = () => showCustomModal(`¿Seguro que quieres eliminar el historial del ${fecha}?`, () => eliminarFechaHistorial(fecha));
 
                 fila.appendChild(btnFecha);
                 fila.appendChild(btnEliminar);
@@ -596,41 +458,39 @@
         }
 
         function eliminarFechaHistorial(fecha) {
-            const mensaje = `¿Seguro que quieres eliminar el historial del ${fecha}?`;
-            if (confirm(mensaje)) {
-                localStorage.removeItem(`datos_${usuario}_${fecha}`);
-                verHistorial();
-            }
+            localStorage.removeItem(`datos_${usuario}_${fecha}`);
+            verHistorial();
         }
 
         function mostrarHistorialDeFecha(fecha) {
             const key = claveDatos(fecha);
             const datos = JSON.parse(localStorage.getItem(key));
             const contenedor = document.getElementById("historialFecha");
-            contenedor.style.display = "block";
-            contenedor.innerHTML = `<h3>🗓 Historial del ${fecha}</h3>`;
+            contenedor.classList.remove("hidden");
+            contenedor.innerHTML = `<h3 class="text-2xl font-bold mb-4">🗓 Historial del ${fecha}</h3>`;
 
             for (let t = 1; t <= 3; t++) {
                 const tablaDatos = datos["tabla" + t];
                 if (!tablaDatos) continue;
 
                 const titulo = document.createElement("h4");
+                titulo.className = "text-xl font-semibold mt-6 mb-2";
                 titulo.textContent = "🧾 Preventa " + t;
                 contenedor.appendChild(titulo);
 
                 const tabla = document.createElement("table");
-                tabla.style.width = "100%";
-                tabla.style.borderCollapse = "collapse";
-                tabla.style.marginBottom = "10px";
+                tabla.className = "w-full border-collapse bg-white rounded-lg shadow-md mb-8";
                 tabla.innerHTML = `
                     <thead>
-                        <tr>
-                            <th>#</th><th>Monto</th><th>Estado</th><th>Método</th><th>Preventa</th><th>Efectivo</th><th>Yape</th><th>Faltante</th>
+                        <tr class="bg-blue-600 text-white">
+                            <th class="p-2 border border-gray-300">#</th><th class="p-2 border border-gray-300">Monto</th><th class="p-2 border border-gray-300">Estado</th><th class="p-2 border border-gray-300">Método</th><th class="p-2 border border-gray-300">Preventa</th><th class="p-2 border border-gray-300">Efectivo</th><th class="p-2 border border-gray-300">Yape</th><th class="p-2 border border-gray-300">Faltante</th>
                         </tr>
                     </thead>
+                    <tbody>
+                    </tbody>
                 `;
 
-                const tbody = document.createElement("tbody");
+                const tbody = tabla.querySelector("tbody");
                 let total = 0, efectivo = 0, yape = 0, transferencia = 0;
                 let deudas = {};
 
@@ -643,80 +503,79 @@
                     const preventa = fila.preventa;
 
                     let faltante = "";
+                    let rowClass = "";
                     if (metodo === "No pago" && preventa !== "Seleccione") {
                         deudas[preventa] = (deudas[preventa] || 0) + monto;
-                        faltante = "Deuda: S/ " + monto.toFixed(2);
-                    } else if (estado !== "Rechazado" && estado !== "No entregado") {
+                        faltante = `Deuda: S/ ${monto.toFixed(2)}`;
+                        rowClass = "bg-red-100 text-red-600";
+                    } else if (estado === "Entregado") {
                         const suma = efec + yp;
-                        const dif = (monto - suma).toFixed(2);
+                        const dif = (monto - suma);
                         if (Math.abs(dif) > 0.01) {
-                            faltante = dif > 0 ? "Falta: S/ " + dif : "Sobra: S/ " + Math.abs(dif);
+                            faltante = dif > 0 ? `Falta: S/ ${dif.toFixed(2)}` : `Sobra: S/ ${Math.abs(dif).toFixed(2)}`;
+                            rowClass = dif > 0 ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600";
                         }
                     }
-                    if (estado !== "Rechazado" && estado !== "No entregado" && !isNaN(monto)) {
-                        if (monto > 0) { // Sumar solo si el monto es un número válido y mayor a 0
-                            total += monto;
-                            efectivo += efec;
-                            yape += yp;
-                            if (metodo === "Transferencia") transferencia += monto;
-                        }
+                    if (estado === "Entregado" && !isNaN(monto) && monto > 0) {
+                        total += monto;
+                        efectivo += efec;
+                        yape += yp;
+                        if (metodo === "Transferencia") transferencia += monto;
                     }
 
                     const tr = document.createElement("tr");
+                    tr.className = `border-b border-gray-200 ${rowClass}`;
                     tr.innerHTML = `
-                        <td>${i + 1}</td>
-                        <td>${fila.monto}</td>
-                        <td>${fila.estado}</td>
-                        <td>${fila.metodo}</td>
-                        <td>${fila.preventa}</td>
-                        <td>${fila.efectivo}</td>
-                        <td>${fila.yape}</td>
-                        <td>${faltante}</td>
+                        <td class="p-2 text-center">${i + 1}</td>
+                        <td class="p-2 text-center">${fila.monto}</td>
+                        <td class="p-2 text-center">${fila.estado}</td>
+                        <td class="p-2 text-center">${fila.metodo}</td>
+                        <td class="p-2 text-center">${fila.preventa}</td>
+                        <td class="p-2 text-center">${fila.efectivo}</td>
+                        <td class="p-2 text-center">${fila.yape}</td>
+                        <td class="p-2 text-center">${faltante}</td>
                     `;
                     tbody.appendChild(tr);
                 });
 
-                tabla.appendChild(tbody);
-
-                const resumen = document.createElement("tfoot");
-                resumen.innerHTML = `
-                    <tr>
-                        <td colspan="2"><strong>Total General:</strong></td>
-                        <td colspan="2">S/ ${total.toFixed(2)}</td>
-                        <td><strong>Yape:</strong></td>
-                        <td>S/ ${yape.toFixed(2)}</td>
-                        <td><strong>Efectivo:</strong></td>
-                        <td>S/ ${efectivo.toFixed(2)}</td>
+                const tfoot = document.createElement("tfoot");
+                tfoot.innerHTML = `
+                    <tr class="font-bold bg-gray-100">
+                        <td colspan="2" class="p-2 text-right">Total General:</td>
+                        <td colspan="2" class="p-2 text-center">S/ ${total.toFixed(2)}</td>
+                        <td class="p-2">Yape:</td>
+                        <td class="p-2 text-center">S/ ${yape.toFixed(2)}</td>
+                        <td class="p-2">Efectivo:</td>
+                        <td class="p-2 text-center">S/ ${efectivo.toFixed(2)}</td>
                     </tr>
-                    <tr>
-                        <td colspan="2"><strong>Transferencias:</strong></td>
-                        <td colspan="6">S/ ${transferencia.toFixed(2)}</td>
+                    <tr class="font-bold bg-gray-100">
+                        <td colspan="2" class="p-2 text-right">Transferencias:</td>
+                        <td colspan="6" class="p-2 text-center">S/ ${transferencia.toFixed(2)}</td>
                     </tr>
                 `;
-                tabla.appendChild(resumen);
+                tabla.appendChild(tfoot);
                 contenedor.appendChild(tabla);
 
                 const deudaDiv = document.createElement("div");
-                deudaDiv.style.marginTop = "10px";
+                deudaDiv.className = "bg-yellow-100 p-3 rounded-lg font-bold mt-4";
                 deudaDiv.innerHTML = "<strong>Estado de preventas:</strong><br>";
                 if (Object.keys(deudas).length === 0) {
                     deudaDiv.innerHTML += "Sin deudas.";
                 } else {
                     for (const k in deudas) {
-                        deudaDiv.innerHTML += `🟡 Preventa ${k} debe: <span style="color:red">S/ ${deudas[k].toFixed(2)}</span><br>`;
+                        deudaDiv.innerHTML += `🟡 Preventa ${k} debe: <span class="text-red-600">S/ ${deudas[k].toFixed(2)}</span><br>`;
                     }
                 }
                 contenedor.appendChild(deudaDiv);
             }
-
-            document.getElementById("fechaList").style.display = "none";
+            document.getElementById("fechaList").classList.add("hidden");
         }
 
         function volverAEdicion() {
-            document.getElementById("fechaList").style.display = "none";
-            document.getElementById("historialFecha").style.display = "none";
-            document.getElementById("tablasContainer").style.display = "block";
-            document.getElementById("volverBtn").style.display = "none";
+            document.getElementById("fechaList").classList.add("hidden");
+            document.getElementById("historialFecha").classList.add("hidden");
+            document.getElementById("tablasContainer").classList.remove("hidden");
+            document.getElementById("volverBtn").classList.add("hidden");
         }
 
         function logout() {
@@ -730,31 +589,16 @@
             console.log("Datos guardados manualmente.");
         }
 
-        // Llamada inicial para cargar los totales.
+        // Llamada inicial para cargar los totales y el estado de los inputs
         document.addEventListener("DOMContentLoaded", () => {
-             calcularTotales();
+            calcularTotales();
         });
 
-        // Este código verifica si el navegador soporta Service Workers.
-        if ('serviceWorker' in navigator) {
-            // Cuando la ventana se carga, registra el service worker.
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service.js')
-                    .then(registration => {
-                        console.log('Service Worker registrado con éxito:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('Fallo en el registro del Service Worker:', error);
-                    });
-            });
-        }
-
-        // El guardado automático se mantiene, pero ahora se llama a calcularTotales() al cargar la página.
+        // El guardado automático se mantiene
         setInterval(() => {
             guardarLocal();
         }, 1000);
     </script>
 </body>
 </html>
-
 
