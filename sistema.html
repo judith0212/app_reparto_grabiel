@@ -252,7 +252,7 @@
                 const datos = datosGuardados["tabla" + t]?.[i] || {};
                 fila.innerHTML = `
                     <td>${i + 1}</td>
-                    <td><input type="text" class="monto" value="${datos.monto || ""}"></td>
+                    <td><input type="number" class="monto" value="${datos.monto || ""}"></td>
                     <td><select class="estado">${estados.map(e => `<option ${e === datos.estado ? "selected" : ""}>${e}</option>`)}</select></td>
                     <td><select class="metodo">${metodos.map(m => `<option ${m === datos.metodo ? "selected" : ""}>${m}</option>`)}</select></td>
                     <td><select class="preventa">${preventas.map(p => `<option ${p === datos.preventa ? "selected" : ""}>${p}</option>`)}</select></td>
@@ -652,3 +652,4 @@
 </script>
 </body>
 </html>
+
