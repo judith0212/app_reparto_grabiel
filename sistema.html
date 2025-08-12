@@ -240,10 +240,11 @@ function calcularTotales() {
             const faltanteCelda = fila.querySelector(".faltante");
 
             let monto = 0;
-            // ✅ CORRECCIÓN: Usamos evalSafe para calcular el monto
-            if (montoInput && montoInput.value.trim() !== "") {
-                monto = evalSafe(montoInput.value);
-            }
+            // ✅ Siempre evaluar la expresión, aunque sea con operadores
+if (montoInput) {
+    monto = evalSafe(montoInput.value);
+}
+
 
             let efectivo = parseFloat(efectivoInput.value) || 0;
             let yape = parseFloat(yapeInput.value) || 0;
@@ -396,12 +397,22 @@ function cerrarTeclado() {
     document.getElementById('teclado-virtual').classList.add('hidden');
 }
 
-// Llamada a calcularTotales en cada cambio de input para una actualización en tiempo real
+// ✅ Recalcular siempre que el usuario escriba o cambie algo
 document.addEventListener("input", function(e) {
-    if (e.target.classList.contains("monto") || e.target.classList.contains("metodo") || e.target.classList.contains("efectivo") || e.target.classList.contains("yape") || e.target.classList.contains("estado")) {
+    if (e.target.classList.contains("monto") || 
+        e.target.classList.contains("metodo") || 
+        e.target.classList.contains("efectivo") || 
+        e.target.classList.contains("yape") || 
+        e.target.classList.contains("estado")) {
+
+        // Si es un monto, evaluar en vivo
+        if (e.target.classList.contains("monto")) {
+            e.target.value = e.target.value.replace(/[^0-9+\-*/.]/g, ""); // Solo números y operadores
+        }
         calcularTotales();
     }
 });
+
 
 function guardarLocal() {
     const datos = {};
