@@ -208,13 +208,18 @@
             container.appendChild(deudaDiv);
         }
         
-function evalSafe(exp) {
+// Función segura para evaluar operaciones como 4+57+4 en todos los dispositivos
+function evalSafe(expr) {
     try {
-      return Function('"use strict";return (' + exp + ')')();
+        expr = expr.replace(/[^0-9+\-*/.]/g, ""); // Solo números y operadores
+        if (!expr.trim()) return 0;
+        return new Function("return " + expr)();
     } catch {
-      return 0;
+        return 0;
     }
-  }
+}
+
+
 
   function calcularTotales() { 
   for (let t = 1; t <= tablaCount; t++) {
@@ -233,14 +238,10 @@ function evalSafe(exp) {
 
       // ✅ Permite operaciones matemáticas como 57+2+81
       let monto = 0;
-      if (montoInput && montoInput.value.trim() !== "") {
-        try {
-          monto = eval(montoInput.value);
-          if (isNaN(monto)) monto = 0;
-        } catch {
-          monto = 0;
-        }
-      }
+if (montoInput && montoInput.value.trim() !== "") {
+    monto = evalSafe(montoInput.value);
+}
+
 
       let efectivo = parseFloat(efectivoInput.value) || 0;
       let yape = parseFloat(yapeInput.value) || 0;
@@ -630,6 +631,7 @@ if (["Efectivo", "Yape"].includes(metodo)) {
     </script>
 </body>
 </html>
+
 
 
 
