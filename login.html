@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión</title>
+    <!-- Tailwind CSS para un diseño moderno y responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Definir una fuente moderna */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Usar tu imagen de fondo "goku.jpg" */
+            background-image: url('goku.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            /* Superposición oscura con un efecto de desenfoque */
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+    <link rel="manifest" href="manifest.json">
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div class="w-11/12 max-w-sm p-8 bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl text-center text-white">
+        <!-- Logo circular, ahora usa tu imagen "goku 2.jpg" -->
+        <img id="loginLogo" src="goku 2.jpg" alt="Logo" class="w-28 h-28 rounded-full object-cover mx-auto mb-4 border-4 border-white/50 shadow-lg">
+
+        <h2 class="text-3xl font-bold mb-6 text-white">Iniciar Sesión</h2>
+
+        <form id="loginForm">
+            <input type="text" id="username" placeholder="Usuario" required
+                   class="w-full p-3 mb-4 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-blue-500 transition-shadow">
+
+            <input type="password" id="password" placeholder="Contraseña" required
+                   class="w-full p-3 mb-6 rounded-lg bg-white/90 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-blue-500 transition-shadow">
+
+            <button type="submit"
+                    class="w-full p-3 rounded-lg bg-blue-500 hover:bg-blue-600 font-bold text-white text-lg transition-colors shadow-lg transform active:scale-95">
+                Entrar
+            </button>
+        </form>
+
+        <!-- Contenedor para el mensaje de error -->
+        <div id="errorMessage" class="hidden mt-4 p-3 rounded-lg bg-red-600 text-sm font-medium">
+            <!-- El mensaje de error se insertará aquí -->
+        </div>
+    </div>
+
+    <script>
+        // Objeto de usuarios y contraseñas
+        const users = {
+            "Jheydyramos": { password: "12345jheydy", role: "admin" },
+            "Grabielolivazapata": { password: "12345", role: "user" },
+            "cliente3": { password: "123457", role: "user" }
+        };
+
+        // Objeto para las fotos de cada usuario, con tus nombres de archivo
+        const fotosUsuarios = {
+            "Jheydyramos": "administrador.jpg",
+            "Grabielolivazapata": "grabiel.jpg",
+            "cliente3": "goku.jpg",
+        };
+
+        const defaultFoto = "goku 2.jpg"; // Foto por defecto
+        const usernameInput = document.getElementById("username");
+        const loginLogo = document.getElementById("loginLogo");
+        const loginForm = document.getElementById("loginForm");
+        const errorMessageDiv = document.getElementById("errorMessage");
+
+        // Cambiar la foto del logo automáticamente al escribir el usuario
+        usernameInput.addEventListener("input", function () {
+            const user = this.value.trim();
+            loginLogo.src = fotosUsuarios[user] || defaultFoto;
+        });
+
+        // Manejar el envío del formulario
+        loginForm.addEventListener("submit", function(e) {
+            e.preventDefault(); // Evitar que el formulario se recargue
+            const user = usernameInput.value.trim();
+            const pass = document.getElementById("password").value.trim();
+
+            if (users[user] && users[user].password === pass) {
+                // Si las credenciales son correctas
+                localStorage.setItem("user", user);
+                localStorage.setItem("role", users[user].role);
+                localStorage.setItem("foto", fotosUsuarios[user] || defaultFoto);
+
+                // Redirigir según el rol del usuario
+                if (users[user].role === "admin") {
+                    window.location.href = "admin.html";
+                } else {
+                    window.location.href = "sistema.html";
+                }
+            } else {
+                // Si las credenciales son incorrectas, mostrar el mensaje de error
+                errorMessageDiv.textContent = "Usuario o contraseña incorrectos.";
+                errorMessageDiv.classList.remove("hidden"); // Mostrar el mensaje
+                // Ocultar el mensaje después de 5 segundos
+                setTimeout(() => {
+                    errorMessageDiv.classList.add("hidden");
+                }, 5000);
+            }
+        });
+    </script>
+    <script>
+    // Este código verifica si el navegador soporta Service Workers.
+    if ('serviceWorker' in navigator) {
+        // Cuando la ventana se carga, registra el service worker.
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service.js')
+                .then(registration => {
+                    console.log('Service Worker registrado con éxito:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('Fallo en el registro del Service Worker:', error);
+                });
+        });
+    }
+</script>
+</body>
+</html>

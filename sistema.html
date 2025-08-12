@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Reparto - Sistema</title>
+    <!-- ✅ PWA: Agregamos el manifest y el service worker para que la app sea instalable -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.png" type="image/png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Mi App">
+    <style>
+        /* Estilo general de la app */
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(to bottom, #f3f8ff, #d6e4f0);
+            margin: 0;
+            padding: 10px;
+        }
+
+        /* Texto de bienvenida */
+        #bienvenida {
+            text-align: center;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        /* Foto de perfil circular */
+        #foto-perfil {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #3498db;
+        }
+
+        /* Botones principales */
+        button {
+            background: linear-gradient(45deg, #4397e0, #618fc4);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Botón secundario (Historial, Guardar, etc.) */
+        .boton-secundario {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .boton-secundario:hover {
+            background-color: #b1bdc6;
+        }
+
+        /* Tabla estilo limpio */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        th {
+            background: #3498db;
+            color: white;
+            padding: 8px;
+        }
+
+        td {
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 6px;
+            text-align: center;
+        }
+
+        input, select {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .error {
+            background-color: #ffffff;
+        }
+
+        .total {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+
+        .boton {
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+
+        #historial {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .logout {
+            float: right;
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+        }
+
+        .logout:hover {
+            background: linear-gradient(45deg, #ff6b5a, #e74c3c);
+            transform: translateY(-2px);
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .deudaPreventa {
+            background-color: #ffffcc;
+            padding: 10px;
+            margin-top: -30px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="logout()" class="logout">Cerrar Sesión</button>
+    <div class="bienvenida">
+        <img id="fotoPerfil" class="foto-perfil" src="" alt="Foto de perfil" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
+        <h2>Bienvenido, a tu APP de REPARTO <span id="nombreUsuario"></span></h2>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+        <button onclick="verHistorial()" class="boton-secundario">📅 Ver historial</button>
+        <button onclick="guardarDatos()" class="boton-secundario">💾 Guardar ahora</button>
+    </div>
+
+    <div id="tablasContainer">
+    </div>
+
+    <div id="fechaList" style="display:none; width: 100%; max-width: 200px;"></div>
+
+    <div id="historialFecha" style="display:none; padding: 10px;"></div>
+
+    <button id="volverBtn" onclick="volverAEdicion()" style="display:none; margin-top: 10px;">🔙 Volver a edición</button>
+
+    <script>
+        // ✅ PWA: Registro del Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registrado con éxito: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('Fallo al registrar ServiceWorker: ', err);
+                    });
+            });
+        }
+        
+        // ===== TU CÓDIGO ORIGINAL DESDE AQUÍ =====
+        const usuario = localStorage.getItem("user");
+        if (!usuario) window.location.href = "login.html";
+        document.getElementById("nombreUsuario").textContent = usuario;
+
+        // Asigna la foto según el usuario
+        const fotosUsuarios = {
+            "Jheydyramos": "foto1.jpg",
+            "Grabielolivazapata": "grabiel.jpg",
+            "cliente3": "goku.jpg"
+        };
+
+        if (fotosUsuarios[usuario]) {
+            document.getElementById("fotoPerfil").src = fotosUsuarios[usuario];
+        } else {
+            document.getElementById("fotoPerfil").src = "default.jpg";
+        }
+
+        const tablaCount = 3;
+        const filasPorTabla = 60;
+        const metodos = ["Seleccione", "Efectivo", "Yape", "Transferencia", "Mixto", "No pago"];
+        const estados = ["Entregado", "No entregado", "Rechazado"];
+        const preventas = ["Seleccione", "Victor", "Milka", "Sandra", "Lia", "Alvaro"];
+        const fechaActual = new Date().toLocaleDateString('es-PE');
+
+        function claveDatos(fecha) {
+            return `datos_${usuario}_${fecha}`;
+        }
+
+        const datosGuardados = JSON.parse(localStorage.getItem(claveDatos(fechaActual))) || {};
+        const container = document.getElementById("tablasContainer");
+
+        for (let t = 1; t <= tablaCount; t++) {
+            const tabla = document.createElement("table");
+            tabla.id = "tabla" + t;
+            const thead = tabla.createTHead();
+            thead.innerHTML = `
+                <tr>
+                    <th>#</th>
+                    <th>Monto</th>
+                    <th>Estado</th>
+                    <th>Método</th>
+                    <th>Preventa</th>
+                    <th>Efectivo</th>
+                    <th>Yape</th>
+                    <th>Faltante</th>
+                </tr>
+            `;
+            const tbody = tabla.createTBody();
+
+            for (let i = 0; i < filasPorTabla; i++) {
+                const fila = tbody.insertRow();
+                const datos = datosGuardados["tabla" + t]?.[i] || {};
+                fila.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td><input type="text" class="monto" value="${datos.monto || ""}"></td>
+                    <td><select class="estado">${estados.map(e => `<option ${e === datos.estado ? "selected" : ""}>${e}</option>`)}</select></td>
+                    <td><select class="metodo">${metodos.map(m => `<option ${m === datos.metodo ? "selected" : ""}>${m}</option>`)}</select></td>
+                    <td><select class="preventa">${preventas.map(p => `<option ${p === datos.preventa ? "selected" : ""}>${p}</option>`)}</select></td>
+                    <td><input type="number" class="efectivo" step="0.01" value="${datos.efectivo || ""}"></td>
+                    <td><input type="number" class="yape" step="0.01" value="${datos.yape || ""}"></td>
+                    <td class="faltante"></td>
+                `;
+            }
+
+            const tfoot = tabla.createTFoot();
+            tfoot.innerHTML = `
+                <tr class="total">
+                    <td colspan="2">Total General:</td>
+                    <td colspan="2" class="totalGeneral">S/ 0.00</td>
+                    <td>Yape:</td>
+                    <td class="totalYape">S/ 0.00</td>
+                    <td>Efectivo:</td>
+                    <td class="totalEfectivo">S/ 0.00</td>
+                </tr>
+                <tr class="total">
+                    <td colspan="2">Total Transferencia:</td>
+                    <td colspan="6" class="totalTransferencia">S/ 0.00</td>
+                </tr>
+            `;
+
+            container.appendChild(document.createElement("h3")).textContent = "Preventa " + t;
+            container.appendChild(tabla);
+            const deudaDiv = document.createElement("div");
+            deudaDiv.id = "deuda" + t;
+            deudaDiv.className = "deudaPreventa";
+            container.appendChild(deudaDiv);
+        }
+
+        function evalSafe(exp) {
+            try {
+                return Function('"use strict";return (' + exp + ')')();
+            } catch {
+                return 0;
+            }
+        }
+
+        function calcularTotales() {
+            for (let t = 1; t <= tablaCount; t++) {
+                const tabla = document.getElementById("tabla" + t);
+                let total = 0, totalYape = 0, totalEfectivo = 0, totalTransferencia = 0;
+                let deudas = {};
+
+                [...tabla.tBodies[0].rows].forEach(fila => {
+                    const montoInput = fila.querySelector(".monto");
+                    const estado = fila.querySelector(".estado").value;
+                    const metodo = fila.querySelector(".metodo").value;
+                    const preventa = fila.querySelector(".preventa").value;
+                    const efectivoInput = fila.querySelector(".efectivo");
+                    const yapeInput = fila.querySelector(".yape");
+                    const faltanteCelda = fila.querySelector(".faltante");
+
+                    let monto = 0;
+                    if (montoInput && montoInput.value.trim() !== "") {
+                        try {
+                            monto = eval(montoInput.value);
+                            if (isNaN(monto)) monto = 0;
+                        } catch {
+                            monto = 0;
+                        }
+                    }
+
+                    let efectivo = parseFloat(efectivoInput.value) || 0;
+                    let yape = parseFloat(yapeInput.value) || 0;
+                    let suma = efectivo + yape;
+
+                    // Bloqueo de campos según método
+                    efectivoInput.disabled = metodo === "Yape";
+                    yapeInput.disabled = metodo === "Efectivo";
+
+                    // Si no entregado o rechazado, limpiar
+                    if (estado === "No entregado" || estado === "Rechazado" || monto === 0) {
+                        fila.classList.remove("error");
+                        faltanteCelda.textContent = "";
+                        if (estado !== "Entregado") {
+                            efectivoInput.value = "";
+                            yapeInput.value = "";
+                        }
+                        return;
+                    }
+
+                    if (metodo === "No pago") {
+                        total += monto;
+                        if (preventa !== "Seleccione") {
+                            deudas[preventa] = (deudas[preventa] || 0) + monto;
+                            faltanteCelda.textContent = "Deuda: S/ " + monto.toFixed(2);
+                            faltanteCelda.style.color = "red";
+                        } else {
+                            faltanteCelda.textContent = "";
+                        }
+                        efectivoInput.disabled = true;
+                        yapeInput.disabled = true;
+                        efectivoInput.value = "";
+                        yapeInput.value = "";
+                        fila.classList.remove("error");
+                        return;
+                    }
+
+                    if (metodo === "Transferencia") {
+                        total += monto;
+                        totalTransferencia += monto;
+                        efectivoInput.disabled = true;
+                        yapeInput.disabled = true;
+                        efectivoInput.value = "";
+                        yapeInput.value = "";
+                        faltanteCelda.textContent = "";
+                        fila.classList.remove("error");
+                        return;
+                    }
+
+                    if (metodo === "Seleccione" && estado === "Entregado") {
+                        total += monto;
+                        return;
+                    }
+
+                    if (metodo === "Mixto") {
+                        total += monto;
+                        totalEfectivo += efectivo;
+                        totalYape += yape;
+                    }
+
+                    if (["Efectivo", "Yape"].includes(metodo)) {
+                        if (!montoInput.value.includes("+") && !montoInput.value.includes("-") && !montoInput.value.includes("*") && !montoInput.value.includes("/")) {
+                            if (metodo === "Efectivo") {
+                                efectivoInput.value = monto.toFixed(2);
+                                yapeInput.value = "";
+                                yape = 0;
+                                efectivo = monto;
+                            } else if (metodo === "Yape") {
+                                yapeInput.value = monto.toFixed(2);
+                                efectivoInput.value = "";
+                                efectivo = 0;
+                                yape = monto;
+                            }
+                        }
+                        total += monto;
+                        totalEfectivo += efectivo;
+                        totalYape += yape;
+                    }
+
+                    const diferencia = monto - suma;
+                    if (Math.abs(diferencia) > 0.01) {
+                        fila.classList.add("error");
+                        if (diferencia > 0) {
+                            faltanteCelda.textContent = "Falta: S/ " + diferencia.toFixed(2);
+                            faltanteCelda.style.color = "red";
+                        } else {
+                            faltanteCelda.textContent = "Sobra: S/ " + Math.abs(diferencia).toFixed(2);
+                            faltanteCelda.style.color = "blue";
+                        }
+                    } else {
+                        fila.classList.remove("error");
+                        faltanteCelda.textContent = "";
+                    }
+                });
+
+                tabla.querySelector(".totalGeneral").textContent = "S/ " + total.toFixed(2);
+                tabla.querySelector(".totalYape").textContent = "S/ " + totalYape.toFixed(2);
+                tabla.querySelector(".totalEfectivo").textContent = "S/ " + totalEfectivo.toFixed(2);
+                tabla.querySelector(".totalTransferencia").textContent = "S/ " + totalTransferencia.toFixed(2);
+
+                const deudaDiv = document.getElementById("deuda" + t);
+                deudaDiv.innerHTML = "<strong>Estado de preventas:</strong><br>";
+                if (Object.keys(deudas).length === 0) {
+                    deudaDiv.innerHTML += "Sin deudas por ahora.";
+                } else {
+                    for (const key in deudas) {
+                        deudaDiv.innerHTML += `🟡 Preventa ${key} debe: <span style="color:red">S/ ${deudas[key].toFixed(2)}</span><br>`;
+                    }
+                }
+            }
+        }
+
+        document.addEventListener("input", function(e) {
+            if (e.target.classList.contains("monto") || e.target.classList.contains("metodo") || e.target.classList.contains("efectivo") || e.target.classList.contains("yape")) {
+                calcularTotales();
+            }
+        });
+
+        function guardarLocal() {
+            const datos = {};
+            for (let t = 1; t <= tablaCount; t++) {
+                const tabla = document.getElementById("tabla" + t);
+                datos["tabla" + t] = [...tabla.tBodies[0].rows].map(fila => ({
+                    monto: fila.querySelector(".monto").value,
+                    estado: fila.querySelector(".estado").value,
+                    metodo: fila.querySelector(".metodo").value,
+                    preventa: fila.querySelector(".preventa").value,
+                    efectivo: fila.querySelector(".efectivo").value,
+                    yape: fila.querySelector(".yape").value
+                }));
+            }
+            localStorage.setItem(claveDatos(fechaActual), JSON.stringify(datos));
+        }
+
+        function verHistorial() {
+            document.getElementById("fechaList").style.display = "block";
+            document.getElementById("historialFecha").style.display = "none";
+            document.getElementById("tablasContainer").style.display = "none";
+            document.getElementById("volverBtn").style.display = "inline-block";
+
+            const contenedorFechas = document.getElementById("fechaList");
+            contenedorFechas.innerHTML = "<h3>📅 Selecciona una fecha:</h3>";
+
+            const fechas = Object.keys(localStorage)
+                .filter(k => k.startsWith(`datos_${usuario}_`))
+                .sort()
+                .reverse();
+
+            fechas.forEach(key => {
+                const fecha = key.replace(`datos_${usuario}_`, "");
+
+                const fila = document.createElement("div");
+                fila.style.display = "flex";
+                fila.style.justifyContent = "space-between";
+                fila.style.alignItems = "center";
+                fila.style.margin = "5px 0";
+
+                const btnFecha = document.createElement("button");
+                btnFecha.textContent = fecha;
+                btnFecha.style.flex = "1";
+                btnFecha.style.marginRight = "5px";
+                btnFecha.style.padding = "10px";
+                btnFecha.style.background = "#007bff";
+                btnFecha.style.color = "white";
+                btnFecha.style.border = "none";
+                btnFecha.style.borderRadius = "5px";
+                btnFecha.style.fontSize = "16px";
+                btnFecha.onclick = () => mostrarHistorialDeFecha(fecha);
+
+                const btnEliminar = document.createElement("button");
+                btnEliminar.textContent = "🗑";
+                btnEliminar.style.background = "#dc3545";
+                btnEliminar.style.color = "white";
+                btnEliminar.style.border = "none";
+                btnEliminar.style.borderRadius = "5px";
+                btnEliminar.style.fontSize = "18px";
+                btnEliminar.style.cursor = "pointer";
+                btnEliminar.onclick = () => eliminarFechaHistorial(fecha);
+
+                fila.appendChild(btnFecha);
+                fila.appendChild(btnEliminar);
+                contenedorFechas.appendChild(fila);
+            });
+        }
+
+        function eliminarFechaHistorial(fecha) {
+            if (confirm(`¿Seguro que quieres eliminar el historial del ${fecha}?`)) {
+                localStorage.removeItem(`datos_${usuario}_${fecha}`);
+                verHistorial();
+            }
+        }
+
+        function mostrarHistorialDeFecha(fecha) {
+            const key = claveDatos(fecha);
+            const datos = JSON.parse(localStorage.getItem(key));
+            const contenedor = document.getElementById("historialFecha");
+            contenedor.style.display = "block";
+            contenedor.innerHTML = `<h3>🗓 Historial del ${fecha}</h3>`;
+
+            for (let t = 1; t <= 3; t++) {
+                const tablaDatos = datos["tabla" + t];
+                if (!tablaDatos) continue;
+
+                const titulo = document.createElement("h4");
+                titulo.textContent = "🧾 Preventa " + t;
+                contenedor.appendChild(titulo);
+
+                const tabla = document.createElement("table");
+                tabla.style.width = "100%";
+                tabla.style.borderCollapse = "collapse";
+                tabla.style.marginBottom = "10px";
+                tabla.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Monto</th><th>Estado</th><th>Método</th><th>Preventa</th><th>Efectivo</th><th>Yape</th><th>Faltante</th>
+                        </tr>
+                    </thead>
+                `;
+
+                const tbody = document.createElement("tbody");
+                let total = 0, efectivo = 0, yape = 0, transferencia = 0;
+                let deudas = {};
+
+                tablaDatos.forEach((fila, i) => {
+                    const monto = parseFloat(fila.monto) || 0;
+                    const efec = parseFloat(fila.efectivo) || 0;
+                    const yp = parseFloat(fila.yape) || 0;
+                    const metodo = fila.metodo;
+                    const estado = fila.estado;
+                    const preventa = fila.preventa;
+
+                    let faltante = "";
+                    if (metodo === "No pago" && preventa !== "Seleccione") {
+                        deudas[preventa] = (deudas[preventa] || 0) + monto;
+                        faltante = "Deuda: S/ " + monto.toFixed(2);
+                    } else if (estado !== "Rechazado" && estado !== "No entregado") {
+                        const suma = efec + yp;
+                        const dif = (monto - suma).toFixed(2);
+                        if (Math.abs(dif) > 0.01) {
+                            faltante = dif > 0 ? "Falta: S/ " + dif : "Sobra: S/ " + Math.abs(dif);
+                        }
+                    }
+
+                    if (estado !== "Rechazado" && estado !== "No entregado") {
+                        total += monto;
+                        efectivo += efec;
+                        yape += yp;
+                        if (metodo === "Transferencia") transferencia += monto;
+                    }
+
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${i + 1}</td>
+                        <td>${fila.monto}</td>
+                        <td>${fila.estado}</td>
+                        <td>${fila.metodo}</td>
+                        <td>${fila.preventa}</td>
+                        <td>${fila.efectivo}</td>
+                        <td>${fila.yape}</td>
+                        <td>${faltante}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                tabla.appendChild(tbody);
+
+                const resumen = document.createElement("tfoot");
+                resumen.innerHTML = `
+                    <tr>
+                        <td colspan="2"><strong>Total General:</strong></td>
+                        <td colspan="2">S/ ${total.toFixed(2)}</td>
+                        <td><strong>Yape:</strong></td>
+                        <td>S/ ${yape.toFixed(2)}</td>
+                        <td><strong>Efectivo:</strong></td>
+                        <td>S/ ${efectivo.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><strong>Transferencias:</strong></td>
+                        <td colspan="6">S/ ${transferencia.toFixed(2)}</td>
+                    </tr>
+                `;
+                tabla.appendChild(resumen);
+                contenedor.appendChild(tabla);
+
+                const deudaDiv = document.createElement("div");
+                deudaDiv.style.marginTop = "10px";
+                deudaDiv.innerHTML = "<strong>Estado de preventas:</strong><br>";
+                if (Object.keys(deudas).length === 0) {
+                    deudaDiv.innerHTML += "Sin deudas.";
+                } else {
+                    for (const k in deudas) {
+                        deudaDiv.innerHTML += `🟡 Preventa ${k} debe: <span style="color:red">S/ ${deudas[k].toFixed(2)}</span><br>`;
+                    }
+                }
+                contenedor.appendChild(deudaDiv);
+            }
+
+            document.getElementById("fechaList").style.display = "none";
+        }
+
+        function volverAEdicion() {
+            document.getElementById("fechaList").style.display = "none";
+            document.getElementById("historialFecha").style.display = "none";
+            document.getElementById("tablasContainer").style.display = "block";
+            document.getElementById("volverBtn").style.display = "none";
+        }
+
+        function logout() {
+            localStorage.removeItem("user");
+            window.location.href = "login.html";
+        }
+
+        setInterval(() => {
+            calcularTotales();
+            guardarLocal();
+        }, 1000);
+    </script>
+    <script>
+    // Este código verifica si el navegador soporta Service Workers.
+    if ('serviceWorker' in navigator) {
+        // Cuando la ventana se carga, registra el service worker.
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service.js')
+                .then(registration => {
+                    console.log('Service Worker registrado con éxito:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('Fallo en el registro del Service Worker:', error);
+                });
+        });
+    }
+</script>
+</body>
+</html>

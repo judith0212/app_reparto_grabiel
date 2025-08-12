@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel de Administración</title>
+    <!-- Tailwind CSS para un diseño moderno y responsive -->
+     <link rel="manifest" href="manifesto.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Oculta los scrolls para un look más limpio */
+        body::-webkit-scrollbar {
+            display: none;
+        }
+        body {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8">
+
+    <!-- Encabezado de la página -->
+    <header class="flex items-center justify-between bg-white p-4 md:p-6 rounded-2xl shadow-lg mb-6 sticky top-4 z-10">
+        <div class="flex items-center gap-4">
+            <!-- La foto del administrador, ahora usa "administrador.jpg" -->
+            <img id="adminPhoto" src="administrador.jpg" alt="Foto de Administrador" class="w-12 h-12 md:w-16 md:h-16 rounded-full border-4 border-blue-500 shadow-md">
+            <h1 id="adminName" class="text-xl md:text-2xl font-bold text-gray-800">Bienvenido, Administrador</h1>
+        </div>
+        <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full transition-colors transform active:scale-95">
+            Cerrar Sesión
+        </button>
+    </header>
+
+    <main class="grid lg:grid-cols-2 gap-6">
+        <!-- Formulario para registrar nuevos usuarios -->
+        <div class="bg-white p-6 rounded-2xl shadow-lg h-fit">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Registrar Nuevo Usuario</h2>
+            <form id="registerForm" class="space-y-4">
+                <input type="text" id="newUsername" placeholder="Nuevo Usuario" required
+                       class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="newPassword" placeholder="Contraseña" required
+                       class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select id="newRole" required
+                        class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <option value="">Seleccione Rol</option>
+                    <option value="user">Usuario</option>
+                    <option value="admin">Administrador</option>
+                </select>
+                <button type="submit" class="w-full p-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg transition-colors transform active:scale-95">
+                    Registrar
+                </button>
+            </form>
+        </div>
+
+        <!-- Lista de usuarios registrados -->
+        <div class="bg-white p-6 rounded-2xl shadow-lg">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Usuarios Registrados</h2>
+            <ul id="userItems" class="space-y-3"></ul>
+        </div>
+    </main>
+
+    <!-- Modal para editar usuario -->
+    <div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4">Editar Usuario</h3>
+            <form id="editForm" class="space-y-4">
+                <input type="text" id="editUsername" class="w-full p-3 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed" readonly>
+                <input type="password" id="editPassword" placeholder="Nueva Contraseña (opcional)"
+                       class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500">
+                <select id="editRole" required
+                        class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
+                    <option value="user">Usuario</option>
+                    <option value="admin">Administrador</option>
+                </select>
+                <div class="flex items-center space-x-2">
+                    <label for="editPhoto" class="font-medium">Cambiar foto:</label>
+                    <input type="file" id="editPhoto" accept="image/*" class="flex-grow">
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" id="cancelEditBtn" class="py-2 px-4 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors">Cancelar</button>
+                    <button type="submit" class="py-2 px-4 rounded-lg bg-green-500 hover:bg-green-600 text-white font-bold transition-colors">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para el mensaje de confirmación/error -->
+    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm text-center">
+            <h3 id="messageTitle" class="text-xl font-bold mb-2"></h3>
+            <p id="messageText" class="mb-4"></p>
+            <button id="closeMessageBtn" class="py-2 px-4 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-bold transition-colors">Aceptar</button>
+        </div>
+    </div>
+
+    <!-- Modal de confirmación para eliminar -->
+    <div id="deleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm text-center">
+            <h3 class="text-xl font-bold mb-2 text-red-600">Confirmar Eliminación</h3>
+            <p id="deleteConfirmText" class="mb-4">¿Estás seguro de que quieres eliminar a este usuario?</p>
+            <div class="flex justify-center space-x-3 mt-6">
+                <button id="cancelDeleteBtn" class="py-2 px-4 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors">Cancelar</button>
+                <button id="confirmDeleteBtn" class="py-2 px-4 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold transition-colors">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Objeto con las fotos de los usuarios
+        const placeholderPhotos = {
+            "Jheydyramos": "administrador.jpg",
+            "Grabielolivazapata": "grabiel.jpg",
+            "cliente3": "goku.jpg"
+        };
+        // Usa una de tus fotos como default si quieres, o un placeholder como este.
+        const defaultPhoto = "gatitos.jpg";
+        let userToDelete = null;
+
+        // Se inicializan los datos de usuarios del localStorage
+        let users = JSON.parse(localStorage.getItem("users")) || {
+            "Jheydyramos": { password: "12345jheydy", role: "admin", foto: placeholderPhotos["Jheydyramos"] },
+            "Grabielolivazapata": { password: "12345", role: "user", foto: placeholderPhotos["Grabielolivazapata"] },
+            "cliente3": { password: "123457", role: "user", foto: placeholderPhotos["cliente3"] }
+        };
+
+        // Función para guardar el objeto de usuarios en localStorage
+        function saveUsers() {
+            localStorage.setItem("users", JSON.stringify(users));
+        }
+
+        // Función para mostrar mensajes en un modal
+        function showMessage(title, text) {
+            document.getElementById("messageTitle").textContent = title;
+            document.getElementById("messageText").textContent = text;
+            document.getElementById("messageModal").classList.remove("hidden");
+        }
+
+        // Función para ocultar el modal de mensajes
+        function hideMessage() {
+            document.getElementById("messageModal").classList.add("hidden");
+        }
+
+        // Función para mostrar el modal de confirmación de eliminación
+        function showDeleteConfirm(username) {
+            userToDelete = username;
+            document.getElementById("deleteConfirmText").innerHTML = `¿Estás seguro de que quieres eliminar a <b>${username}</b>?`;
+            document.getElementById("deleteConfirmModal").classList.remove("hidden");
+        }
+
+        // Función para ocultar el modal de confirmación
+        function hideDeleteConfirm() {
+            document.getElementById("deleteConfirmModal").classList.add("hidden");
+            userToDelete = null;
+        }
+
+        // Función para actualizar la lista de usuarios en la interfaz
+        function updateUserList() {
+            const userItems = document.getElementById("userItems");
+            userItems.innerHTML = "";
+            for (const [username, data] of Object.entries(users)) {
+                const li = document.createElement("li");
+                li.className = "bg-gray-50 p-4 rounded-xl flex items-center justify-between shadow-sm transition-transform hover:scale-[1.01]";
+                li.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <img src="${data.foto || defaultPhoto}" alt="Foto de ${username}" class="w-10 h-10 rounded-full border-2 border-gray-300">
+                        <div>
+                            <span class="block text-md font-medium text-gray-800">${username}</span>
+                            <span class="block text-sm text-gray-500">${data.role === 'admin' ? 'Administrador' : 'Usuario'}</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="edit-btn p-2 rounded-full bg-yellow-400 hover:bg-yellow-500 transition-colors" data-username="${username}">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828zM15.828 4L14 5.828 16.172 8l1.828-1.828a1 1 0 000-1.414l-1.414-1.414zM4 10v6a1 1 0 001 1h6a1 1 0 001-1v-2l-7-7H4z"/></svg>
+                        </button>
+                        <button class="delete-btn p-2 rounded-full bg-red-500 hover:bg-red-600 transition-colors" data-username="${username}">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2h1.5l.493 10.428A2 2 0 007.994 18h4.012a2 2 0 001.99-1.572L15.5 6h1.5a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zm3 6a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd"/></svg>
+                        </button>
+                    </div>
+                `;
+                userItems.appendChild(li);
+            }
+
+            // Añadir event listeners a los botones recién creados
+            document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const username = e.currentTarget.getAttribute('data-username');
+                    editUser(username);
+                });
+            });
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const username = e.currentTarget.getAttribute('data-username');
+                    showDeleteConfirm(username);
+                });
+            });
+        }
+
+        // Función para cargar los datos del administrador y actualizar la UI
+        function loadAdminProfile() {
+            const adminUser = localStorage.getItem("user");
+            const adminRole = localStorage.getItem("role");
+            const adminFoto = localStorage.getItem("foto");
+
+            if (!adminUser || adminRole !== "admin") {
+                // Si no hay un admin logueado, redirigir
+                window.location.href = "login.html";
+                return;
+            }
+
+            document.getElementById("adminName").textContent = `Bienvenido, ${adminUser}`;
+            if (adminFoto) {
+                document.getElementById("adminPhoto").src = adminFoto;
+            }
+        }
+
+        // Función para abrir el modal de edición y cargar los datos del usuario
+        function editUser(username) {
+            const userData = users[username];
+            if (!userData) return;
+
+            document.getElementById("editUsername").value = username;
+            document.getElementById("editRole").value = userData.role;
+
+            document.getElementById("editModal").classList.remove("hidden");
+        }
+
+        // Evento para cerrar el modal de mensaje
+        document.getElementById("closeMessageBtn").addEventListener("click", hideMessage);
+
+        // Evento para cerrar el modal de confirmación
+        document.getElementById("cancelDeleteBtn").addEventListener("click", hideDeleteConfirm);
+
+        // Evento para confirmar la eliminación
+        document.getElementById("confirmDeleteBtn").addEventListener("click", () => {
+            if (userToDelete) {
+                delete users[userToDelete];
+                saveUsers();
+                updateUserList();
+                showMessage("Eliminado", `El usuario ${userToDelete} ha sido eliminado.`);
+                hideDeleteConfirm();
+            }
+        });
+
+        // Evento para cerrar el modal de edición
+        document.getElementById("cancelEditBtn").addEventListener("click", () => {
+            document.getElementById("editModal").classList.add("hidden");
+        });
+
+        // Evento para el formulario de registro
+        document.getElementById("registerForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const newUsername = document.getElementById("newUsername").value.trim();
+            const newPassword = document.getElementById("newPassword").value.trim();
+            const newRole = document.getElementById("newRole").value;
+
+            if (users[newUsername]) {
+                showMessage("Error", "Ese nombre de usuario ya existe.");
+                return;
+            }
+
+            users[newUsername] = {
+                password: newPassword,
+                role: newRole,
+                foto: defaultPhoto
+            };
+
+            saveUsers();
+            updateUserList();
+            document.getElementById("registerForm").reset();
+            showMessage("Registro Exitoso", `El usuario ${newUsername} ha sido registrado.`);
+        });
+
+        // Evento para el formulario de edición
+        document.getElementById("editForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const username = document.getElementById("editUsername").value;
+            const newPassword = document.getElementById("editPassword").value.trim();
+            const newRole = document.getElementById("editRole").value;
+            const newPhotoFile = document.getElementById("editPhoto").files[0];
+
+            if (newPassword) {
+                users[username].password = newPassword;
+            }
+            users[username].role = newRole;
+
+            if (newPhotoFile) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    users[username].foto = reader.result; // Guardar la foto como Base64
+                    saveUsers();
+                    updateUserList();
+                    showMessage("Actualizado", `El usuario ${username} ha sido actualizado.`);
+                    document.getElementById("editModal").classList.add("hidden");
+                };
+                reader.readAsDataURL(newPhotoFile);
+            } else {
+                saveUsers();
+                updateUserList();
+                showMessage("Actualizado", `El usuario ${username} ha sido actualizado.`);
+                document.getElementById("editModal").classList.add("hidden");
+            }
+        });
+
+        // Evento para cerrar sesión
+        document.getElementById("logoutBtn").addEventListener("click", function() {
+            localStorage.clear();
+            window.location.href = "login.html";
+        });
+
+        // Inicializar la página al cargar
+        window.addEventListener("load", () => {
+            loadAdminProfile();
+            updateUserList();
+        });
+    </script>
+    <script>
+    // Este código verifica si el navegador soporta Service Workers.
+    if ('serviceWorker' in navigator) {
+        // Cuando la ventana se carga, registra el service worker.
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service.js')
+                .then(registration => {
+                    console.log('Service Worker registrado con éxito:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('Fallo en el registro del Service Worker:', error);
+                });
+        });
+    }
+</script>
+</body>
+</html>
