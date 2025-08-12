@@ -160,6 +160,52 @@
             margin-bottom: 30px;
             font-weight: bold;
         }
+        
+        /* Estilos del teclado virtual */
+        #teclado-virtual {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #333;
+            padding: 10px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+            display: none; /* Inicialmente oculto */
+            z-index: 1000;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+
+        #teclado-virtual .grid-teclado {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        #teclado-virtual button {
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 20px;
+            font-size: 1.5em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #teclado-virtual button:hover {
+            background-color: #777;
+        }
+
+        #teclado-virtual button.operador {
+            background-color: #f39c12;
+        }
+
+        #teclado-virtual button.operador:hover {
+            background-color: #e67e22;
+        }
     </style>
 </head>
 <body>
@@ -182,6 +228,29 @@
     <div id="historialFecha" style="display:none; padding: 10px;"></div>
 
     <button id="volverBtn" onclick="volverAEdicion()" style="display:none; margin-top: 10px;">🔙 Volver a edición</button>
+
+    <!-- ✅ Teclado virtual agregado aquí -->
+    <div id="teclado-virtual">
+        <div class="grid-teclado">
+            <button onclick="agregarCaracter('1')">1</button>
+            <button onclick="agregarCaracter('2')">2</button>
+            <button onclick="agregarCaracter('3')">3</button>
+            <button class="operador" onclick="agregarCaracter('+')">+</button>
+            <button onclick="agregarCaracter('4')">4</button>
+            <button onclick="agregarCaracter('5')">5</button>
+            <button onclick="agregarCaracter('6')">6</button>
+            <button class="operador" onclick="agregarCaracter('-')">-</button>
+            <button onclick="agregarCaracter('7')">7</button>
+            <button onclick="agregarCaracter('8')">8</button>
+            <button onclick="agregarCaracter('9')">9</button>
+            <button class="operador" onclick="agregarCaracter('*')">×</button>
+            <button onclick="agregarCaracter('.')">.</button>
+            <button onclick="agregarCaracter('0')">0</button>
+            <button class="operador" onclick="calcularResultado()">=</button>
+            <button class="operador" onclick="agregarCaracter('/')">÷</button>
+        </div>
+        <button onclick="cerrarTeclado()" style="margin-top: 10px; width: 100%; background-color: #c0392b;">Cerrar</button>
+    </div>
 
     <script>
         // ✅ PWA: Registro del Service Worker
@@ -252,7 +321,7 @@
                 const datos = datosGuardados["tabla" + t]?.[i] || {};
                 fila.innerHTML = `
                     <td>${i + 1}</td>
-                    <td><input type="number" class="monto" value="${datos.monto || ""}"></td>
+                    <td><input type="text" class="monto" value="${datos.monto || ""}" pattern="[0-9+\-*\/\.]*"></td>
                     <td><select class="estado">${estados.map(e => `<option ${e === datos.estado ? "selected" : ""}>${e}</option>`)}</select></td>
                     <td><select class="metodo">${metodos.map(m => `<option ${m === datos.metodo ? "selected" : ""}>${m}</option>`)}</select></td>
                     <td><select class="preventa">${preventas.map(p => `<option ${p === datos.preventa ? "selected" : ""}>${p}</option>`)}</select></td>
@@ -293,6 +362,8 @@
                 return 0;
             }
         }
+        
+        let activeInput = null; // Variable para rastrear el input activo
 
         function calcularTotales() {
             for (let t = 1; t <= tablaCount; t++) {
@@ -312,7 +383,7 @@
                     let monto = 0;
                     if (montoInput && montoInput.value.trim() !== "") {
                         try {
-                            monto = eval(montoInput.value);
+                            monto = evalSafe(montoInput.value); // Usa evalSafe aquí
                             if (isNaN(monto)) monto = 0;
                         } catch {
                             monto = 0;
@@ -379,8 +450,9 @@
                     }
 
                     if (["Efectivo", "Yape"].includes(metodo)) {
-                        if (!montoInput.value.includes("+") && !montoInput.value.includes("-") && !montoInput.value.includes("*") && !montoInput.value.includes("/")) {
-                            if (metodo === "Efectivo") {
+                        // Comprobación más simple para no sobrescribir si ya hay una expresión
+                        if (montoInput.value.trim() !== "" && !isNaN(evalSafe(montoInput.value))) {
+                             if (metodo === "Efectivo") {
                                 efectivoInput.value = monto.toFixed(2);
                                 yapeInput.value = "";
                                 yape = 0;
@@ -428,6 +500,42 @@
                     }
                 }
             }
+        }
+
+        document.addEventListener("focusin", function(e) {
+            if (e.target.classList.contains("monto")) {
+                activeInput = e.target;
+                document.getElementById('teclado-virtual').style.display = 'block';
+            }
+        });
+
+        document.addEventListener("focusout", function(e) {
+            // Se usará el botón de cerrar para ocultar el teclado
+        });
+
+        function agregarCaracter(char) {
+            if (activeInput) {
+                activeInput.value += char;
+                activeInput.focus();
+                calcularTotales();
+            }
+        }
+
+        function calcularResultado() {
+            if (activeInput) {
+                const expresion = activeInput.value;
+                const resultado = evalSafe(expresion);
+                activeInput.value = resultado.toFixed(2);
+                calcularTotales();
+            }
+        }
+
+        function cerrarTeclado() {
+            if (activeInput) {
+                activeInput.blur();
+                activeInput = null;
+            }
+            document.getElementById('teclado-virtual').style.display = 'none';
         }
 
         document.addEventListener("input", function(e) {
@@ -504,7 +612,9 @@
         }
 
         function eliminarFechaHistorial(fecha) {
-            if (confirm(`¿Seguro que quieres eliminar el historial del ${fecha}?`)) {
+            // Reemplazado window.confirm con un mensaje de alerta.
+            const mensaje = `¿Seguro que quieres eliminar el historial del ${fecha}?`;
+            if (confirm(mensaje)) {
                 localStorage.removeItem(`datos_${usuario}_${fecha}`);
                 verHistorial();
             }
@@ -652,4 +762,3 @@
 </script>
 </body>
 </html>
-
