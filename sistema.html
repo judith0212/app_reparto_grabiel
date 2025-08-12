@@ -373,6 +373,8 @@
         
         let activeInput = null; // Variable para rastrear el input activo
 
+        // Se ha mejorado la lógica de esta función para que no se detenga si una expresión
+        // está incompleta, permitiendo que el total se siga calculando para las otras filas.
         function calcularTotales() {
             for (let t = 1; t <= tablaCount; t++) {
                 const tabla = document.getElementById("tabla" + t);
@@ -388,88 +390,81 @@
                     const yapeInput = fila.querySelector(".yape");
                     const faltanteCelda = fila.querySelector(".faltante");
 
-                    let monto = evalSafe(montoInput.value);
-                    if (isNaN(monto)) {
-                        monto = 0; // Si la expresión es inválida, se usa 0, pero no se sumará al total
-                    }
+                    const valorMonto = montoInput.value;
+                    let monto = evalSafe(valorMonto);
 
                     // Bloqueo de campos según método
                     efectivoInput.disabled = (metodo === "Yape" || metodo === "Transferencia" || metodo === "No pago");
                     yapeInput.disabled = (metodo === "Efectivo" || metodo === "Transferencia" || metodo === "No pago");
                     
-                    // Si el estado es "No entregado" o "Rechazado", se limpian los campos y no se suman
-                    if (estado === "No entregado" || estado === "Rechazado" || monto === 0) {
+                    // Si el estado no es "Entregado" o el monto es 0, limpiamos campos y pasamos a la siguiente fila.
+                    if (estado !== "Entregado" || (valorMonto.trim() === "" && metodo !== "No pago")) {
                         fila.classList.remove("error");
                         faltanteCelda.textContent = "";
                         if (estado !== "Entregado") {
                             efectivoInput.value = "";
                             yapeInput.value = "";
                         }
-                        return;
+                        // Continuar al siguiente elemento del bucle sin sumar nada
+                        return; 
                     }
 
-                    // No sumar si la expresión es incompleta
-                    if (isNaN(evalSafe(montoInput.value))) {
+                    // Si la expresión es incompleta, mostramos un mensaje pero NO detenemos el cálculo del total.
+                    if (isNaN(monto)) {
                         faltanteCelda.textContent = "Expresión incompleta";
                         faltanteCelda.style.color = "orange";
-                        return;
-                    }
-                    
-                    // Limpiar el mensaje de expresión incompleta si la expresión es válida
-                    faltanteCelda.textContent = "";
-
-                    if (metodo === "No pago") {
-                        total += monto;
-                        if (preventa !== "Seleccione") {
-                            deudas[preventa] = (deudas[preventa] || 0) + monto;
-                            faltanteCelda.textContent = "Deuda: S/ " + monto.toFixed(2);
-                            faltanteCelda.style.color = "red";
-                        } else {
-                            faltanteCelda.textContent = "";
-                        }
-                        return;
+                        monto = 0; // Usar 0 para que no se sume al total
+                    } else {
+                        // Limpiar el mensaje de expresión incompleta si la expresión es válida
+                        faltanteCelda.textContent = "";
+                        faltanteCelda.style.color = "";
                     }
 
-                    if (metodo === "Transferencia") {
-                        total += monto;
-                        totalTransferencia += monto;
-                        efectivoInput.value = "";
-                        yapeInput.value = "";
-                        return;
-                    }
-
-                    if (metodo === "Efectivo") {
-                        efectivoInput.value = monto.toFixed(2);
-                        yapeInput.value = "";
-                        total += monto;
-                        totalEfectivo += monto;
-                    } else if (metodo === "Yape") {
-                        yapeInput.value = monto.toFixed(2);
-                        efectivoInput.value = "";
-                        total += monto;
-                        totalYape += monto;
-                    } else if (metodo === "Mixto" && estado === "Entregado") {
-                        let efectivo = parseFloat(efectivoInput.value) || 0;
-                        let yape = parseFloat(yapeInput.value) || 0;
-                        let suma = efectivo + yape;
-                        
-                        total += monto;
-                        totalEfectivo += efectivo;
-                        totalYape += yape;
-                        
-                        const diferencia = monto - suma;
-                        if (Math.abs(diferencia) > 0.01) {
-                            fila.classList.add("error");
-                            if (diferencia > 0) {
-                                faltanteCelda.textContent = "Falta: S/ " + diferencia.toFixed(2);
+                    if (monto > 0) { // Solo sumamos si el monto es un número válido
+                        if (metodo === "No pago") {
+                            if (preventa !== "Seleccione") {
+                                deudas[preventa] = (deudas[preventa] || 0) + monto;
+                                faltanteCelda.textContent = "Deuda: S/ " + monto.toFixed(2);
                                 faltanteCelda.style.color = "red";
-                            } else {
-                                faltanteCelda.textContent = "Sobra: S/ " + Math.abs(diferencia).toFixed(2);
-                                faltanteCelda.style.color = "blue";
                             }
                         } else {
-                            fila.classList.remove("error");
-                            faltanteCelda.textContent = "";
+                            total += monto; // Suma al total general
+                            
+                            if (metodo === "Transferencia") {
+                                totalTransferencia += monto;
+                                efectivoInput.value = "";
+                                yapeInput.value = "";
+                            } else if (metodo === "Efectivo") {
+                                efectivoInput.value = monto.toFixed(2);
+                                yapeInput.value = "";
+                                totalEfectivo += monto;
+                            } else if (metodo === "Yape") {
+                                yapeInput.value = monto.toFixed(2);
+                                efectivoInput.value = "";
+                                totalYape += monto;
+                            } else if (metodo === "Mixto") {
+                                let efectivo = parseFloat(efectivoInput.value) || 0;
+                                let yape = parseFloat(yapeInput.value) || 0;
+                                let suma = efectivo + yape;
+                                
+                                totalEfectivo += efectivo;
+                                totalYape += yape;
+                                
+                                const diferencia = monto - suma;
+                                if (Math.abs(diferencia) > 0.01) {
+                                    fila.classList.add("error");
+                                    if (diferencia > 0) {
+                                        faltanteCelda.textContent = "Falta: S/ " + diferencia.toFixed(2);
+                                        faltanteCelda.style.color = "red";
+                                    } else {
+                                        faltanteCelda.textContent = "Sobra: S/ " + Math.abs(diferencia).toFixed(2);
+                                        faltanteCelda.style.color = "blue";
+                                    }
+                                } else {
+                                    fila.classList.remove("error");
+                                    faltanteCelda.textContent = "";
+                                }
+                            }
                         }
                     }
                 });
@@ -526,7 +521,9 @@
         }
 
         document.addEventListener("input", function(e) {
-            if (e.target.classList.contains("monto") || e.target.classList.contains("metodo") || e.target.classList.contains("efectivo") || e.target.classList.contains("yape")) {
+            // Se ha cambiado la lógica para que el cálculo se active con cualquier cambio
+            // en los inputs, lo que permite que el total se actualice en tiempo real.
+            if (e.target.classList.contains("monto") || e.target.classList.contains("metodo") || e.target.classList.contains("efectivo") || e.target.classList.contains("yape") || e.target.classList.contains("estado")) {
                 calcularTotales();
             }
         });
@@ -599,7 +596,6 @@
         }
 
         function eliminarFechaHistorial(fecha) {
-            // Reemplazado window.confirm con un mensaje de alerta.
             const mensaje = `¿Seguro que quieres eliminar el historial del ${fecha}?`;
             if (confirm(mensaje)) {
                 localStorage.removeItem(`datos_${usuario}_${fecha}`);
@@ -657,8 +653,8 @@
                             faltante = dif > 0 ? "Falta: S/ " + dif : "Sobra: S/ " + Math.abs(dif);
                         }
                     }
-                    if (estado !== "Rechazado" && estado !== "No entregado") {
-                        if (!isNaN(monto)) { // Sumar solo si el monto es un número válido
+                    if (estado !== "Rechazado" && estado !== "No entregado" && !isNaN(monto)) {
+                        if (monto > 0) { // Sumar solo si el monto es un número válido y mayor a 0
                             total += monto;
                             efectivo += efec;
                             yape += yp;
@@ -728,6 +724,12 @@
             window.location.href = "login.html";
         }
 
+        function guardarDatos() {
+            guardarLocal();
+            // Reemplazado window.alert con un mensaje en la consola.
+            console.log("Datos guardados manualmente.");
+        }
+
         // Llamada inicial para cargar los totales.
         document.addEventListener("DOMContentLoaded", () => {
              calcularTotales();
@@ -754,3 +756,5 @@
     </script>
 </body>
 </html>
+
+
