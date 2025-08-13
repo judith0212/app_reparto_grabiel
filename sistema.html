@@ -9,22 +9,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Mi App">
-    <!-- Carga de Tailwind CSS para un diseño limpio y responsivo -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(to bottom, #f3f8ff, #d6e4f0);
         }
-        /* Estilo para filas con errores de cálculo */
-        .error {
-            background-color: #fee2e2; /* Un fondo rojo claro para indicar el error */
-        }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <!-- Modal de confirmación personalizado -->
     <div id="custom-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[1001]">
         <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div class="mt-3 text-center">
@@ -44,7 +38,6 @@
         </div>
     </div>
 
-    <!-- Botón de cerrar sesión en la esquina superior derecha -->
     <button onclick="logout()" class="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-red-700 transition duration-200">
         Cerrar Sesión
     </button>
@@ -134,7 +127,8 @@
                     <th class="p-2 border border-gray-300">Método</th>
                     <th class="p-2 border border-gray-300">Preventa</th>
                     <th class="p-2 border border-gray-300">Efectivo</th>
-                    <th class="p-2 border border-gray-300 rounded-tr-lg">Yape</th>
+                    <th class="p-2 border border-gray-300">Yape</th>
+                    <th class="p-2 border border-gray-300 rounded-tr-lg">Faltante</th>
                 </tr>
             `;
             const tbody = tabla.createTBody();
@@ -145,8 +139,7 @@
                 fila.className = "border-b border-gray-200";
                 fila.innerHTML = `
                     <td class="p-2 text-center">${i + 1}</td>
-                    <!-- Mantenemos inputmode="decimal" para el teclado nativo -->
-                    <td class="p-2"><input type="text" class="monto w-full p-1 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" value="${datos.monto || ""}" inputmode="decimal"></td>
+                    <td class="p-2"><input type="text" class="monto w-full p-1 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" value="${datos.monto || ""}" pattern="[0-9+\-*\/\.]*" inputmode="numeric"></td>
                     <td class="p-2"><select class="estado w-full p-1 rounded-md border border-gray-300">${estados.map(e => `<option ${e === datos.estado ? "selected" : ""}>${e}</option>`)}</select></td>
                     <td class="p-2"><select class="metodo w-full p-1 rounded-md border border-gray-300">${metodos.map(m => `<option ${m === datos.metodo ? "selected" : ""}>${m}</option>`)}</select></td>
                     <td class="p-2"><select class="preventa w-full p-1 rounded-md border border-gray-300">${preventas.map(p => `<option ${p === datos.preventa ? "selected" : ""}>${p}</option>`)}</select></td>
@@ -213,6 +206,7 @@
 
                     let efectivo = parseFloat(efectivoInput.value) || 0;
                     let yape = parseFloat(yapeInput.value) || 0;
+                    let suma = efectivo + yape;
 
                     // Bloqueo de campos según método
                     efectivoInput.disabled = metodo === "Yape" || metodo === "Transferencia" || metodo === "No pago";
@@ -229,7 +223,6 @@
                         return;
                     }
 
-                    // ✅ CORRECCIÓN: Actualizamos los totales en todos los casos, incluyendo "No pago" y "Transferencia"
                     if (metodo === "No pago") {
                         total += monto;
                         if (preventa !== "Seleccione") {
@@ -242,25 +235,38 @@
                         efectivoInput.value = "";
                         yapeInput.value = "";
                         fila.classList.remove("error");
-                    } else if (metodo === "Transferencia") {
+                        return;
+                    }
+
+                    if (metodo === "Transferencia") {
                         total += monto;
                         totalTransferencia += monto;
                         efectivoInput.value = "";
                         yapeInput.value = "";
                         faltanteCelda.textContent = "";
                         fila.classList.remove("error");
-                    } else if (metodo === "Seleccione" && estado === "Entregado") {
+                        return;
+                    }
+                    
+                    if (metodo === "Seleccione" && estado === "Entregado") {
                         total += monto;
-                    } else { // Métodos "Efectivo", "Yape", "Mixto"
-                        if (metodo === "Efectivo") {
-                            if (!String(montoInput.value).includes("+") && !String(montoInput.value).includes("-") && !String(montoInput.value).includes("*") && !String(montoInput.value).includes("/")) {
+                        return; 
+                    }
+
+                    if (metodo === "Mixto") {
+                        total += monto;
+                        totalEfectivo += efectivo;
+                        totalYape += yape;
+                    }
+
+                    if (["Efectivo", "Yape"].includes(metodo)) {
+                        if (!String(montoInput.value).includes("+") && !String(montoInput.value).includes("-") && !String(montoInput.value).includes("*") && !String(montoInput.value).includes("/")) {
+                            if (metodo === "Efectivo") {
                                 efectivoInput.value = monto.toFixed(2);
                                 yapeInput.value = "";
                                 yape = 0;
                                 efectivo = monto;
-                            }
-                        } else if (metodo === "Yape") {
-                            if (!String(montoInput.value).includes("+") && !String(montoInput.value).includes("-") && !String(montoInput.value).includes("*") && !String(montoInput.value).includes("/")) {
+                            } else if (metodo === "Yape") {
                                 yapeInput.value = monto.toFixed(2);
                                 efectivoInput.value = "";
                                 efectivo = 0;
@@ -270,22 +276,21 @@
                         total += monto;
                         totalEfectivo += efectivo;
                         totalYape += yape;
-                    
-                        // Mostrar faltante o sobrante
-                        const diferencia = monto - (efectivo + yape);
-                        if (Math.abs(diferencia) > 0.01) {
-                            fila.classList.add("error");
-                            if (diferencia > 0) {
-                                faltanteCelda.textContent = "Falta: S/ " + diferencia.toFixed(2);
-                                faltanteCelda.style.color = "red";
-                            } else {
-                                faltanteCelda.textContent = "Sobra: S/ " + Math.abs(diferencia).toFixed(2);
-                                faltanteCelda.style.color = "blue";
-                            }
+                    }
+
+                    const diferencia = monto - suma;
+                    if (Math.abs(diferencia) > 0.01) {
+                        fila.classList.add("error");
+                        if (diferencia > 0) {
+                            faltanteCelda.textContent = "Falta: S/ " + diferencia.toFixed(2);
+                            faltanteCelda.style.color = "red";
                         } else {
-                            fila.classList.remove("error");
-                            faltanteCelda.textContent = "";
+                            faltanteCelda.textContent = "Sobra: S/ " + Math.abs(diferencia).toFixed(2);
+                            faltanteCelda.style.color = "blue";
                         }
+                    } else {
+                        fila.classList.remove("error");
+                        faltanteCelda.textContent = "";
                     }
                 });
 
@@ -306,7 +311,6 @@
             }
         }
 
-        // Recalcular siempre que el usuario escriba o cambie algo
         document.addEventListener("input", function(e) {
             if (e.target.classList.contains("monto") ||
                 e.target.classList.contains("metodo") ||
@@ -314,9 +318,8 @@
                 e.target.classList.contains("yape") ||
                 e.target.classList.contains("estado")) {
                 
-                // Si es un monto, evaluar en vivo
                 if (e.target.classList.contains("monto")) {
-                    e.target.value = e.target.value.replace(/[^0-9+\-*/.]/g, ""); // Solo números y operadores
+                    e.target.value = e.target.value.replace(/[^0-9+\-*/.]/g, "");
                 }
                 calcularTotales();
             }
@@ -439,7 +442,7 @@
                 let deudas = {};
 
                 tablaDatos.forEach((fila, i) => {
-                    const monto = evalSafe(fila.monto) || 0; // Utilizar evalSafe para el monto
+                    const monto = evalSafe(fila.monto) || 0;
                     const efec = parseFloat(fila.efectivo) || 0;
                     const yp = parseFloat(fila.yape) || 0;
                     const metodo = fila.metodo;
@@ -532,12 +535,10 @@
             console.log("Datos guardados manualmente.");
         }
 
-        // Llamada inicial para cargar los totales y el estado de los inputs
         document.addEventListener("DOMContentLoaded", () => {
             calcularTotales();
         });
 
-        // El guardado automático se mantiene
         setInterval(() => {
             guardarLocal();
         }, 1000);
