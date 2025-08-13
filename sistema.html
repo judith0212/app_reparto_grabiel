@@ -16,6 +16,10 @@
             font-family: 'Inter', sans-serif;
             background: linear-gradient(to bottom, #f3f8ff, #d6e4f0);
         }
+        /* Estilo para filas con errores de cálculo */
+        .error {
+            background-color: #fee2e2; /* Un fondo rojo claro para indicar el error */
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -130,8 +134,7 @@
                     <th class="p-2 border border-gray-300">Método</th>
                     <th class="p-2 border border-gray-300">Preventa</th>
                     <th class="p-2 border border-gray-300">Efectivo</th>
-                    <th class="p-2 border border-gray-300">Yape</th>
-                    <th class="p-2 border border-gray-300 rounded-tr-lg">Faltante</th>
+                    <th class="p-2 border border-gray-300 rounded-tr-lg">Yape</th>
                 </tr>
             `;
             const tbody = tabla.createTBody();
@@ -142,7 +145,7 @@
                 fila.className = "border-b border-gray-200";
                 fila.innerHTML = `
                     <td class="p-2 text-center">${i + 1}</td>
-                    <!-- ✅ Mantenemos inputmode="decimal" para el teclado nativo -->
+                    <!-- Mantenemos inputmode="decimal" para el teclado nativo -->
                     <td class="p-2"><input type="text" class="monto w-full p-1 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" value="${datos.monto || ""}" inputmode="decimal"></td>
                     <td class="p-2"><select class="estado w-full p-1 rounded-md border border-gray-300">${estados.map(e => `<option ${e === datos.estado ? "selected" : ""}>${e}</option>`)}</select></td>
                     <td class="p-2"><select class="metodo w-full p-1 rounded-md border border-gray-300">${metodos.map(m => `<option ${m === datos.metodo ? "selected" : ""}>${m}</option>`)}</select></td>
@@ -210,7 +213,6 @@
 
                     let efectivo = parseFloat(efectivoInput.value) || 0;
                     let yape = parseFloat(yapeInput.value) || 0;
-                    let suma = efectivo + yape;
 
                     // Bloqueo de campos según método
                     efectivoInput.disabled = metodo === "Yape" || metodo === "Transferencia" || metodo === "No pago";
@@ -227,6 +229,7 @@
                         return;
                     }
 
+                    // ✅ CORRECCIÓN: Actualizamos los totales en todos los casos, incluyendo "No pago" y "Transferencia"
                     if (metodo === "No pago") {
                         total += monto;
                         if (preventa !== "Seleccione") {
@@ -239,40 +242,25 @@
                         efectivoInput.value = "";
                         yapeInput.value = "";
                         fila.classList.remove("error");
-                        return;
-                    }
-
-                    if (metodo === "Transferencia") {
+                    } else if (metodo === "Transferencia") {
                         total += monto;
                         totalTransferencia += monto;
                         efectivoInput.value = "";
                         yapeInput.value = "";
                         faltanteCelda.textContent = "";
                         fila.classList.remove("error");
-                        return;
-                    }
-                    
-                    // Si el método está en "Seleccione" pero el pedido fue entregado, sumarlo igual
-                    if (metodo === "Seleccione" && estado === "Entregado") {
+                    } else if (metodo === "Seleccione" && estado === "Entregado") {
                         total += monto;
-                        return; // no tocar efectivo/yape
-                    }
-
-                    if (metodo === "Mixto") {
-                        total += monto;
-                        totalEfectivo += efectivo;
-                        totalYape += yape;
-                    }
-
-                    if (["Efectivo", "Yape"].includes(metodo)) {
-                        // Autocompletar solo si el monto es un número sin operadores
-                        if (!String(montoInput.value).includes("+") && !String(montoInput.value).includes("-") && !String(montoInput.value).includes("*") && !String(montoInput.value).includes("/")) {
-                            if (metodo === "Efectivo") {
+                    } else { // Métodos "Efectivo", "Yape", "Mixto"
+                        if (metodo === "Efectivo") {
+                            if (!String(montoInput.value).includes("+") && !String(montoInput.value).includes("-") && !String(montoInput.value).includes("*") && !String(montoInput.value).includes("/")) {
                                 efectivoInput.value = monto.toFixed(2);
                                 yapeInput.value = "";
                                 yape = 0;
                                 efectivo = monto;
-                            } else if (metodo === "Yape") {
+                            }
+                        } else if (metodo === "Yape") {
+                            if (!String(montoInput.value).includes("+") && !String(montoInput.value).includes("-") && !String(montoInput.value).includes("*") && !String(montoInput.value).includes("/")) {
                                 yapeInput.value = monto.toFixed(2);
                                 efectivoInput.value = "";
                                 efectivo = 0;
@@ -282,22 +270,22 @@
                         total += monto;
                         totalEfectivo += efectivo;
                         totalYape += yape;
-                    }
-
-                    // Mostrar faltante o sobrante
-                    const diferencia = monto - suma;
-                    if (Math.abs(diferencia) > 0.01) {
-                        fila.classList.add("error");
-                        if (diferencia > 0) {
-                            faltanteCelda.textContent = "Falta: S/ " + diferencia.toFixed(2);
-                            faltanteCelda.style.color = "red";
+                    
+                        // Mostrar faltante o sobrante
+                        const diferencia = monto - (efectivo + yape);
+                        if (Math.abs(diferencia) > 0.01) {
+                            fila.classList.add("error");
+                            if (diferencia > 0) {
+                                faltanteCelda.textContent = "Falta: S/ " + diferencia.toFixed(2);
+                                faltanteCelda.style.color = "red";
+                            } else {
+                                faltanteCelda.textContent = "Sobra: S/ " + Math.abs(diferencia).toFixed(2);
+                                faltanteCelda.style.color = "blue";
+                            }
                         } else {
-                            faltanteCelda.textContent = "Sobra: S/ " + Math.abs(diferencia).toFixed(2);
-                            faltanteCelda.style.color = "blue";
+                            fila.classList.remove("error");
+                            faltanteCelda.textContent = "";
                         }
-                    } else {
-                        fila.classList.remove("error");
-                        faltanteCelda.textContent = "";
                     }
                 });
 
