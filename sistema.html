@@ -16,13 +16,6 @@
             font-family: 'Inter', sans-serif;
             background: linear-gradient(to bottom, #f3f8ff, #d6e4f0);
         }
-        /* Personalización de los colores del botón para el teclado */
-        #teclado-virtual button.operador {
-            background-color: #f39c12;
-        }
-        #teclado-virtual button.operador:hover {
-            background-color: #e67e22;
-        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -76,31 +69,6 @@
     <button id="volverBtn" onclick="volverAEdicion()" class="hidden mt-4 mx-auto block bg-gray-500 text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-gray-600 transition duration-200">
         🔙 Volver a edición
     </button>
-
-    <!-- Teclado virtual -->
-    <div id="teclado-virtual" class="hidden fixed bottom-0 left-0 w-full bg-gray-800 p-4 shadow-xl z-[1000] rounded-t-xl">
-        <div class="grid grid-cols-4 gap-2 max-w-sm mx-auto">
-            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('1')">1</button>
-            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('2')">2</button>
-            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('3')">3</button>
-            <button class="bg-orange-500 text-white p-4 text-xl rounded-lg shadow-md hover:bg-orange-600 transition duration-200" onclick="agregarCaracter('+')">+</button>
-            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('4')">4</button>
-            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('5')">5</button>
-            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('6')">6</button>
-            <button class="bg-orange-500 text-white p-4 text-xl rounded-lg shadow-md hover:bg-orange-600 transition duration-200" onclick="agregarCaracter('-')">-</button>
-            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('7')">7</button>
-            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('8')">8</button>
-            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('9')">9</button>
-            <button class="bg-orange-500 text-white p-4 text-xl rounded-lg shadow-md hover:bg-orange-600 transition duration-200" onclick="agregarCaracter('*')">×</button>
-            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('.')">.</button>
-            <button class="bg-gray-600 text-white p-4 text-xl rounded-lg shadow-md hover:bg-gray-700 transition duration-200" onclick="agregarCaracter('0')">0</button>
-            <button class="bg-blue-500 text-white p-4 text-xl rounded-lg shadow-md hover:bg-blue-600 transition duration-200 col-span-1" onclick="tecladoCalcularResultado()">=</button>
-            <button class="bg-orange-500 text-white p-4 text-xl rounded-lg shadow-md hover:bg-orange-600 transition duration-200" onclick="agregarCaracter('/')">÷</button>
-        </div>
-        <button onclick="cerrarTeclado()" class="mt-4 w-full bg-red-600 text-white p-3 rounded-lg font-bold shadow-md hover:bg-red-700 transition duration-200">
-            Cerrar
-        </button>
-    </div>
 
     <script>
         // ✅ PWA: Registro del Service Worker
@@ -175,8 +143,8 @@
                 fila.className = "border-b border-gray-200";
                 fila.innerHTML = `
                     <td class="p-2 text-center">${i + 1}</td>
-                    <!-- ✅ CAMBIO: Añadido inputmode="numeric" para que aparezca el teclado numérico en móviles -->
-                    <td class="p-2"><input type="text" class="monto w-full p-1 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" value="${datos.monto || ""}" pattern="[0-9+\-*\/\.]*" inputmode="numeric"></td>
+                    <!-- ✅ CAMBIO: inputmode="decimal" para que aparezca el teclado nativo con punto decimal -->
+                    <td class="p-2"><input type="text" class="monto w-full p-1 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500" value="${datos.monto || ""}" inputmode="decimal"></td>
                     <td class="p-2"><select class="estado w-full p-1 rounded-md border border-gray-300">${estados.map(e => `<option ${e === datos.estado ? "selected" : ""}>${e}</option>`)}</select></td>
                     <td class="p-2"><select class="metodo w-full p-1 rounded-md border border-gray-300">${metodos.map(m => `<option ${m === datos.metodo ? "selected" : ""}>${m}</option>`)}</select></td>
                     <td class="p-2"><select class="preventa w-full p-1 rounded-md border border-gray-300">${preventas.map(p => `<option ${p === datos.preventa ? "selected" : ""}>${p}</option>`)}</select></td>
@@ -349,49 +317,6 @@
                     }
                 }
             }
-        }
-
-        document.addEventListener("focusin", function(e) {
-            if (e.target.classList.contains("monto")) {
-                activeInput = e.target;
-                document.getElementById('teclado-virtual').classList.remove('hidden');
-                activeInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); // Desplazamiento automático
-            }
-        });
-        
-        // ✅ CAMBIO: Esta función se encarga de agregar caracteres, no de calcular.
-        function agregarCaracter(char) {
-            if (activeInput) {
-                // Si el carácter es un operador, asegurarse de que no haya un operador anterior al final
-                const lastChar = activeInput.value.slice(-1);
-                if (['+', '-', '*', '/'].includes(char) && ['+', '-', '*', '/'].includes(lastChar)) {
-                    // Evita operadores dobles, excepto si el último es un número
-                    return;
-                }
-                activeInput.value += char;
-                activeInput.focus();
-                calcularTotales();
-            }
-        }
-        
-        // ✅ CAMBIO: Nueva función para el botón de igual
-        function tecladoCalcularResultado() {
-            if (activeInput) {
-                const resultado = evalSafe(activeInput.value);
-                if (!isNaN(resultado)) {
-                    activeInput.value = resultado;
-                }
-                activeInput.focus();
-                calcularTotales();
-            }
-        }
-
-        function cerrarTeclado() {
-            if (activeInput) {
-                activeInput.blur();
-                activeInput = null;
-            }
-            document.getElementById('teclado-virtual').classList.add('hidden');
         }
 
         // ✅ Recalcular siempre que el usuario escriba o cambie algo
@@ -632,5 +557,3 @@
     </script>
 </body>
 </html>
-
-
